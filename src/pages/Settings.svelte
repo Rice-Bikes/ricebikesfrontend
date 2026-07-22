@@ -4,6 +4,7 @@
     stepBundleFromRaw,
     tuneUpFromRaw,
     repairFromRaw,
+    userFromRaw,
     rawFromStepBundle,
     rawFromTuneUp,
     type StepBundle,
@@ -11,10 +12,12 @@
     type TuneUp,
     type NewTuneUp,
     type Repair,
+    type User,
   } from "$lib/api";
   import EditInput from "$lib/EditInput.svelte";
   import StepList from "$lib/StepList.svelte";
   import TuneUpList from "$lib/TuneUpList.svelte";
+  import Table from "$lib/Table.svelte";
 
   let stepBundles = $state<StepBundle[]>([]);
   $effect(() => {
@@ -103,6 +106,15 @@
     const rawRepairs: any[] = await rbFetch("/repairs");
     repairs = rawRepairs.map(repairFromRaw);
   }
+
+  let employees = $state<User>([]);
+  $effect(() => {
+    loadEmployees();
+  });
+  async function loadEmployees() {
+    const rawEmployees: any[] = await rbFetch("/users");
+    employees = rawEmployees.map(userFromRaw);
+  }
 </script>
 
 <h1>Settings</h1>
@@ -175,5 +187,37 @@
   </form>
 </section>
 <section>
+  {#snippet employeeNetID(employee)}
+    {employee.netID}
+  {/snippet}
+  {#snippet employeeName(employee)}
+    {employee.firstName} {employee.lastName}
+  {/snippet}
+  {#snippet employeeActive(employee)}
+    {#if employee.active}
+      ACTIVE
+    {:else}
+      NOT ACTIVE
+    {/if}
+  {/snippet}
   <h2>Employees</h2>
+  <Table
+    data={employees}
+    pageLimit={20}
+    key={(employee) => employee.id}
+    comparator={(a, b) => {
+      if (a.active && !b.active) {
+        return -1;
+      }
+      if (!a.active && b.active) {
+        return 1;
+      }
+      return a.firstName.localeCompare(b.firstName);
+    }}
+    columns={[
+      { name: "netID", render: employeeNetID },
+      { name: "Name", render: employeeName },
+      { name: "Status", render: employeeActive },
+    ]}
+  />
 </section>

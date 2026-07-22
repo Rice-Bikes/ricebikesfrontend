@@ -15,7 +15,7 @@
   }
 
   let {
-    page = $bindable(),
+    page = $bindable(0),
     data,
     columns,
     key,

@@ -74,6 +74,7 @@ export interface User {
   netID: string;
   firstName: string;
   lastName: string;
+  active: boolean;
 }
 
 export interface Step {
@@ -304,6 +305,7 @@ export function userFromRaw(raw: any): User {
     netID: raw.username,
     firstName: raw.firstname,
     lastName: raw.lastname,
+    active: raw.active,
   };
 }
 
@@ -313,6 +315,7 @@ export function rawFromUser(user: Partial<User>): any {
   if (user.netID !== undefined) raw.net_id = user.netID;
   if (user.firstName !== undefined) raw.first_name = user.firstName;
   if (user.lastName !== undefined) raw.last_name = user.lastName;
+  if (user.active !== undefined) raw.active = user.active;
   return raw;
 }
 
@@ -402,7 +405,7 @@ export function transactionDetailFromRaw(raw: any): TransactionDetail {
 }
 
 export function rawFromTransactionDetail(
-  detail: Partial<TransactionDetail>
+  detail: Partial<TransactionDetail>,
 ): any {
   const raw: any = {};
   if (detail.id !== undefined) raw.transaction_detail_id = detail.id;
