@@ -469,6 +469,7 @@ ol.entry-list {
 .tag-icon-list li {
   display: inline-flex;
   align-items: center;
+  color: var(--color-text);
 }
 
 /* Logs */

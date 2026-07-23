@@ -33,35 +33,91 @@
 
   const id = crypto.randomUUID();
 
+  const DEBOUNCE_MS = 75;
+  let debouncedSearchInput = $state("");
+  $effect(() => {
+    const value = searchInput;
+    const timeout = setTimeout(() => {
+      debouncedSearchInput = value;
+    }, DEBOUNCE_MS);
+    return () => clearTimeout(timeout);
+  });
+
   let filtered = $derived.by(() => {
-    if (searchInput.length === 0 && popover) {
+    if (debouncedSearchInput.length === 0 && popover) {
       return [];
     }
     return fuse
-      .search(searchInput)
+      .search(debouncedSearchInput)
       .map((result) => result.item)
       .slice(0, searchLimit);
+  });
+
+  let inputEl = $state<HTMLInputElement | undefined>();
+  let listEl = $state<HTMLElement | undefined>();
+
+  function positionList() {
+    if (inputEl === undefined || listEl === undefined) {
+      return;
+    }
+    const rect = inputEl.getBoundingClientRect();
+    listEl.style.top = `${rect.bottom}px`;
+    listEl.style.left = `${rect.left}px`;
+    listEl.style.width = `${rect.width}px`;
+  }
+
+  $effect(() => {
+    if (!popover || listEl === undefined) {
+      return;
+    }
+    if (filtered.length > 0) {
+      if (!listEl.matches(":popover-open")) {
+        positionList();
+        listEl.showPopover();
+      }
+    } else if (listEl.matches(":popover-open")) {
+      listEl.hidePopover();
+    }
+  });
+
+  $effect(() => {
+    if (!popover || listEl === undefined) {
+      return;
+    }
+    window.addEventListener("resize", positionList);
+    window.addEventListener("scroll", positionList, true);
+    return () => {
+      window.removeEventListener("resize", positionList);
+      window.removeEventListener("scroll", positionList, true);
+    };
   });
 </script>
 
 <input
+  bind:this={inputEl}
   bind:value={searchInput}
   {placeholder}
-  style="width: 100%; margin-bottom: var(--space-3); anchor-name: --picker-input-{id};"
+  style="width: 100%; margin-bottom: var(--space-3);"
   onkeydown={(e) => {
-    if (e.key === "Enter" && filtered.length > 0) {
+    if (e.key !== "Enter") {
+      return;
+    }
+    debouncedSearchInput = searchInput;
+    if (filtered.length > 0) {
       e.preventDefault();
       onSelected(filtered[0]);
       searchInput = "";
+      debouncedSearchInput = "";
     }
   }}
 />
-{#if filtered.length > 0}
+{#if popover || filtered.length > 0}
   <div
-    id="filtered-list"
+    bind:this={listEl}
+    id="filtered-list-{id}"
     popover={popover ? "auto" : undefined}
     style={popover
-      ? `position-anchor: --picker-input-${id}; position: absolute; width: anchor-size(width); position-area: bottom; display: block; overflow-y: auto; max-height: 100%`
+      ? "position: fixed; overflow-y: scroll; height: 16rem; max-height: 16rem"
       : "overflow-y: scroll;"}
   >
     <ol class="picker-list">

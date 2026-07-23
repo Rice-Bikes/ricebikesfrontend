@@ -77,7 +77,7 @@
     }
     return {
       transactionType,
-      customer,
+      customer: transactionType === "retrospec" ? null : customer,
       bike,
       stepBundle: bundles.find((b) => b.id === stepBundleId) ?? null,
       tuneUp: tuneups.find((t) => t.id == tuneUpId) ?? null,
