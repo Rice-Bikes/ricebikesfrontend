@@ -322,6 +322,9 @@
     }
     await updateTransaction({ customer: selectedCustomer });
   }
+  async function unreserve() {
+    await updateTransaction({ customer: null });
+  }
 
   async function deleteTransactionDetail(i: number, detail: TransactionDetail) {
     if (detail.kind === "item") {
@@ -676,30 +679,43 @@
       commandfor="customer-dialog">Reserve</button
     >
     <dialog id="customer-dialog" style="height: 30rem">
-      <div class="dialog-header">
-        <h2>Reserve transaction</h2>
-        <button
-          class="icon-btn dialog-close"
-          command="close"
-          commandfor="customer-dialog"
-          aria-label="Close"><X /></button
+      <div style="display: flex; flex-direction: column; height: 100%">
+        <div class="dialog-header">
+          <h2>Reserve transaction</h2>
+          <button
+            class="icon-btn dialog-close"
+            command="close"
+            commandfor="customer-dialog"
+            aria-label="Close"><X /></button
+          >
+        </div>
+        <form
+          style="flex: 1; min-height: 0"
+          onsubmit={(e) => {
+            e.preventDefault();
+            reserveForCustomer();
+          }}
         >
+          <div style="display: flex; flex-direction: column; height: 100%">
+            {#key customerSelectorKey}
+              <CustomerSelector
+                bind:customer={selectedCustomer}
+                customers={allCustomers}
+              />
+            {/key}
+            <div style="flex: 1; min-height: 0"></div>
+            <button class="primary">Save</button>
+          </div>
+        </form>
       </div>
-      <form
-        onsubmit={(e) => {
-          e.preventDefault();
-          reserveForCustomer();
-        }}
-      >
-        {#key customerSelectorKey}
-          <CustomerSelector
-            bind:customer={selectedCustomer}
-            customers={allCustomers}
-          />
-        {/key}
-        <button class="primary">Save</button>
-      </form>
     </dialog>
+  {/if}
+  {#if transaction.customer !== null && transaction.transactionType === "retrospec"}
+    <button
+      style="margin-top: var(--space-3)"
+      class="primary"
+      onclick={() => unreserve()}>Unreserve</button
+    >
   {/if}
   {#if transaction.bike}
     <section>

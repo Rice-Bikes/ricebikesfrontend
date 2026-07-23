@@ -107,7 +107,7 @@
     <option value="retrospec">Retrospec</option>
   </select>
   {#if transactionType !== "retrospec"}
-    <CustomerSelector bind:customer {customers} />
+    <CustomerSelector popover bind:customer {customers} />
   {:else}
     <select bind:value={retrospecType}>
       <option value="none"></option>
