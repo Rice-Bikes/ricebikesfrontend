@@ -77,6 +77,7 @@
     searchKeys={["name"]}
     render={repairRender}
     callback={onRepairPicked}
+    placeholder="Enter repair"
     popover
   />
 </div>

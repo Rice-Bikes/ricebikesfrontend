@@ -661,6 +661,11 @@ details[open] summary {
   align-items: center;
 }
 
+.wrap {
+  display: inline-flex;
+  flex-wrap: wrap;
+}
+
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;

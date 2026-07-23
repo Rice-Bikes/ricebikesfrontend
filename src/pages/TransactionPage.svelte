@@ -144,6 +144,10 @@
     return tuneUps.find((t) => t.id === tuneUpId)?.name ?? "Tune up";
   }
 
+  function tuneUpPrice(tuneUpId: string): number | null {
+    return tuneUps.find((t) => t.id === tuneUpId)?.cost ?? null;
+  }
+
   async function deleteRepairGroup(details: TransactionDetailRepair[]) {
     for (const detail of details) {
       const i = repairs.findIndex((r) => r.id === detail.id);
@@ -180,13 +184,16 @@
     return l;
   });
 
-  // TODO: add in tune up price by inlining tune up info in transaction details
   const totalPrice = $derived.by(() => {
     return (
       items.reduce((acc, detail) => acc + detail.item.standardPrice, 0) +
       repairs.reduce(
         (acc, detail) =>
           acc + (detail.tuneUpId === null ? detail.repair.price : 0),
+        0,
+      ) +
+      repairGroups.reduce(
+        (acc, group) => acc + (tuneUpPrice(group.tuneUpId) ?? 0),
         0,
       )
     );

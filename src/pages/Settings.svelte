@@ -186,7 +186,7 @@
     {/each}
   </ul>
   <form
-    class="field-row"
+    class="field-row wrap"
     style="margin-top: var(--space-4)"
     onsubmit={(e) => {
       e.preventDefault();
