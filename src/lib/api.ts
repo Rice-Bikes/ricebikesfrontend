@@ -67,6 +67,7 @@ export interface NewTransaction {
   stepBundle: StepBundle | null;
   tuneUp: TuneUp | null;
   customer: (NewCustomer & { id?: string }) | null;
+  quantity: number;
 }
 
 export interface User {

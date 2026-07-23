@@ -49,7 +49,10 @@
           x.transactionType !== "retrospec" &&
           x.isBeerBike;
       case "builds":
-        return (x) => true;
+        return (x) =>
+          x.isCompleted === false &&
+          x.transactionType === "retrospec" &&
+          x.dateCompleted === null;
     }
   });
 
@@ -117,6 +120,7 @@
     ) as HTMLDialogElement;
     dialog.close();
     let customerId = transaction.customer?.id;
+    // TODO: fix this on bulk creation
     const bike: any | null =
       transaction.bike !== null
         ? await rbFetch("/bikes", {
@@ -138,9 +142,12 @@
         bike_id: bike?.bike_id,
         step_bundle_id: transaction.stepBundle?.id ?? undefined,
         tune_up_id: transaction.tuneUp?.id ?? undefined,
+        quantity: transaction.quantity,
       }),
     });
-    push(`/transaction/${r.transaction_id}`);
+    if (transaction.quantity == 1) {
+      push(`/transaction/${r.transaction_id}`);
+    }
   }
 </script>
 
@@ -200,31 +207,49 @@
     <span class="spacer" style="flex: 1"></span>
     <span class="muted">{transactions.length} transactions</span>
   </div>
-  <dialog id="transaction-dialog">
-    <div class="dialog-header">
-      <h2>New transaction</h2>
-      <button
-        class="icon-btn dialog-close"
-        command="close"
-        commandfor="transaction-dialog"
-        aria-label="Close"><X /></button
-      >
+  <dialog id="transaction-dialog" style="height: 25rem;">
+    <div style="display: flex; flex-direction: column; height: 100%">
+      <div class="dialog-header">
+        <h2>New transaction</h2>
+        <button
+          class="icon-btn dialog-close"
+          command="close"
+          commandfor="transaction-dialog"
+          aria-label="Close"><X /></button
+        >
+      </div>
+      <div style="flex: 1">
+        {#key transactionBuilderKey}
+          <TransactionBuilder
+            customers={allCustomers}
+            tuneups={tuneUps}
+            {bundles}
+            callback={onTransactionBuilt}
+          />
+        {/key}
+      </div>
     </div>
-    {#key transactionBuilderKey}
-      <TransactionBuilder
-        customers={allCustomers}
-        tuneups={tuneUps}
-        {bundles}
-        callback={onTransactionBuilt}
-      />
-    {/key}
   </dialog>
   <Table
     bind:page={transactionTablePage}
     data={transactions}
     pageLimit={20}
     key={(transaction) => transaction.id}
-    comparator={(a, b) => b.dateCreated.getTime() - a.dateCreated.getTime()}
+    comparator={(a, b) => {
+      if (a.isUrgent && !b.isUrgent) {
+        return -1;
+      }
+      if (b.isUrgent && !a.isUrgent) {
+        return 1;
+      }
+      if (a.isWaitingOnEmail && !b.isWaitingOnEmail) {
+        return 1;
+      }
+      if (b.isWaitingOnEmail && !a.isWaitingOnEmail) {
+        return -1;
+      }
+      return a.dateCreated.getTime() - b.dateCreated.getTime();
+    }}
     columns={[
       {
         name: "#",
