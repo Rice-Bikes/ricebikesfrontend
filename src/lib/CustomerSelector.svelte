@@ -50,13 +50,6 @@
     <span class="muted">None</span>
   {/if}
 </p>
-<button onclick={() => (buildingCustomer = !buildingCustomer)} type="button">
-  {#if buildingCustomer}
-    Close
-  {:else}
-    New customer
-  {/if}
-</button>
 <Picker
   data={customers.map((x: Customer) => {
     return { name: `${x.firstName} ${x.lastName}`, ...x };
@@ -68,6 +61,13 @@
   callback={onCustomerPicked}
   placeholder="Find existing customer"
 />
+<button onclick={() => (buildingCustomer = !buildingCustomer)} type="button">
+  {#if buildingCustomer}
+    Close
+  {:else}
+    New customer
+  {/if}
+</button>
 {#if buildingCustomer}
   <CustomerBuilder callback={onCustomerBuilt} />
 {/if}

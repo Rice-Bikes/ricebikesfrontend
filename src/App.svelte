@@ -5,6 +5,9 @@
   import TransactionPage from "./pages/TransactionPage.svelte";
   import AuthPrompt from "$lib/AuthPrompt.svelte";
   import { appState } from "$lib/state.svelte";
+  import { themeState, toggleTheme } from "$lib/theme.svelte";
+  import Sun from "$lib/icons/Sun.svelte";
+  import Moon from "$lib/icons/Moon.svelte";
 
   let authResetRemaining = $state(0);
   const routes = {
@@ -27,6 +30,19 @@
   {:else}
     <span class="user-info">Anonymous</span>
   {/if}
+  <button
+    class="icon-btn"
+    aria-label={themeState.value === "dark"
+      ? "Switch to light mode"
+      : "Switch to dark mode"}
+    onclick={toggleTheme}
+  >
+    {#if themeState.value === "dark"}
+      <Sun />
+    {:else}
+      <Moon />
+    {/if}
+  </button>
 </header>
 <main>
   <Router {routes} />

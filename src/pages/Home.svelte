@@ -18,11 +18,11 @@
   import TransactionBuilder from "$lib/TransactionBuilder.svelte";
   import Plus from "$lib/icons/Plus.svelte";
   import X from "$lib/icons/X.svelte";
-  import beerSymbol from "../assets/beer.svg";
-  import nuclearSymbol from "../assets/nuclear.svg";
-  import employeeSymbol from "../assets/person.svg";
-  import urgentSymbol from "../assets/exclamation.svg";
-  import emailSymbol from "../assets/email.svg";
+  import BeerIcon from "$lib/icons/Beer.svelte";
+  import NuclearIcon from "$lib/icons/Nuclear.svelte";
+  import EmployeeIcon from "$lib/icons/Person.svelte";
+  import UrgentIcon from "$lib/icons/Exclamation.svelte";
+  import EmailIcon from "$lib/icons/Email.svelte";
   import { push, replace, router } from "svelte-spa-router";
 
   let view = $state<"main" | "beerBikes" | "builds">("main");
@@ -163,34 +163,19 @@
 {#snippet transactionTagsColumn(transaction: Transaction)}
   <ul class="tag-icon-list">
     {#if transaction.isUrgent}
-      <li>
-        <img src={urgentSymbol} alt="Urgent symbol" width="22" height="22" />
-      </li>
+      <li><UrgentIcon /></li>
     {/if}
     {#if transaction.isBeerBike}
-      <li>
-        <img src={beerSymbol} alt="Beer symbol" width="22" height="22" />
-      </li>
+      <li><BeerIcon /></li>
     {/if}
     {#if transaction.isEmployee}
-      <li>
-        <img
-          src={employeeSymbol}
-          alt="Employee symbol"
-          width="22"
-          height="22"
-        />
-      </li>
+      <li><EmployeeIcon /></li>
     {/if}
     {#if transaction.isNuclear}
-      <li>
-        <img src={nuclearSymbol} alt="Nuclear symbol" width="22" height="22" />
-      </li>
+      <li><NuclearIcon /></li>
     {/if}
     {#if transaction.isWaitingOnEmail}
-      <li>
-        <img src={emailSymbol} alt="Email symbol" width="22" height="22" />
-      </li>
+      <li><EmailIcon /></li>
     {/if}
   </ul>
 {/snippet}
