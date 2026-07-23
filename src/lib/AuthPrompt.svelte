@@ -67,6 +67,7 @@
 </script>
 
 <dialog id="auth-prompt" oncancel={(e) => e.preventDefault()}>
+  <h2>Sign in</h2>
   <form
     onsubmit={async (e) => {
       e.preventDefault();
@@ -74,9 +75,9 @@
     }}
   >
     <input placeholder="Enter netID" bind:value={netID} />
-    <button>Login</button>
+    <button class="primary">Login</button>
   </form>
   {#if errorVisible}
-    <p>{errorMessage}</p>
+    <p class="faint" style="color: var(--color-danger)">{errorMessage}</p>
   {/if}
 </dialog>

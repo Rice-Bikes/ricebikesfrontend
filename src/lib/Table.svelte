@@ -1,9 +1,12 @@
 <script lang="ts" generics="T">
   import type { Snippet } from "svelte";
+  import ChevronLeft from "$lib/icons/ChevronLeft.svelte";
+  import ChevronRight from "$lib/icons/ChevronRight.svelte";
 
   interface Column {
     name: string;
     render: Snippet<[T]>;
+    width?: string;
   }
   interface Props {
     page: number;
@@ -38,6 +41,11 @@
 </script>
 
 <table>
+  <colgroup>
+    {#each columns as column}
+      <col style={column.width ? `width: ${column.width}` : ""} />
+    {/each}
+  </colgroup>
   <thead>
     <tr>
       {#each columns as column}
@@ -55,5 +63,18 @@
     {/each}
   </tbody>
 </table>
-<button disabled={page == 0} onclick={() => (page -= 1)}>Back</button>
-<button disabled={page == maxPage} onclick={() => (page += 1)}>Forward</button>
+<div class="table-pagination">
+  <button
+    class="icon-btn"
+    aria-label="Previous page"
+    disabled={page == 0}
+    onclick={() => (page -= 1)}><ChevronLeft /></button
+  >
+  <span class="muted">{page + 1} / {Math.max(maxPage + 1, 1)}</span>
+  <button
+    class="icon-btn"
+    aria-label="Next page"
+    disabled={page == maxPage}
+    onclick={() => (page += 1)}><ChevronRight /></button
+  >
+</div>

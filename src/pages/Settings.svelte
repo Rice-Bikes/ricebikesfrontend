@@ -18,6 +18,8 @@
   import StepList from "$lib/StepList.svelte";
   import TuneUpList from "$lib/TuneUpList.svelte";
   import Table from "$lib/Table.svelte";
+  import Trash from "$lib/icons/Trash.svelte";
+  import ArrowRight from "$lib/icons/ArrowRight.svelte";
 
   let stepBundles = $state<StepBundle[]>([]);
   $effect(() => {
@@ -120,70 +122,87 @@
 <h1>Settings</h1>
 <section>
   <h2>Step Bundles</h2>
-  <ol>
+  <ul class="entry-list">
     {#each stepBundles as stepBundle, i (stepBundle.id)}
       <li>
         <details>
-          <summary>{stepBundle.name}</summary>
+          <summary class="horizontal-align"
+            ><span>{stepBundle.name}</span>
+            <button
+              class="icon-btn danger"
+              aria-label="Delete step bundle"
+              onclick={() => deleteStepBundle(stepBundle, i)}><Trash /></button
+            >
+          </summary>
           <StepList bundle={stepBundle.id} />
-          <button onclick={() => deleteStepBundle(stepBundle, i)}>Delete</button
-          >
         </details>
       </li>
     {/each}
-  </ol>
+  </ul>
   <form
+    class="field-row"
+    style="margin-top: var(--space-4)"
     onsubmit={(e) => {
       e.preventDefault();
       submitNewStepBundle();
     }}
   >
     <input placeholder="Enter new step bundle" bind:value={newStepBundle} />
-    <button>Submit</button>
+    <button class="icon-btn primary" aria-label="Submit step bundle"
+      ><ArrowRight /></button
+    >
   </form>
 </section>
 <section>
   <h2>Tune Ups</h2>
-  <ol>
+  <ul class="entry-list">
     {#each tuneUps as tuneUp, i (tuneUp.id)}
       {#snippet renderTuneUpCost()}
         ${tuneUp.cost}
       {/snippet}
       <li>
         <details>
-          <summary>{tuneUp.name}</summary>
+          <summary class="horizontal-align"
+            ><span>{tuneUp.name}</span>
+            <button
+              class="icon-btn danger"
+              aria-label="Delete tune up"
+              onclick={() => deleteTuneUp(tuneUp, i)}><Trash /></button
+            >
+          </summary>
           <TuneUpList {repairs} tuneup={tuneUp} />
-          Price: <EditInput
-            callback={(newCost) => updateTuneUpCost(tuneUp, parseInt(newCost))}
-            initial={tuneUp.cost.toString()}
-            preedit={renderTuneUpCost}
-            type="number"
-          />
-          <button onclick={() => deleteTuneUp(tuneUp, i)}>Delete</button>
+          <div class="field-row">
+            <span>Price:</span>
+            <EditInput
+              callback={(newCost) =>
+                updateTuneUpCost(tuneUp, parseInt(newCost))}
+              initial={tuneUp.cost.toString()}
+              preedit={renderTuneUpCost}
+              type="number"
+            />
+          </div>
         </details>
       </li>
     {/each}
-  </ol>
+  </ul>
   <form
+    class="field-row"
+    style="margin-top: var(--space-4)"
     onsubmit={(e) => {
       e.preventDefault();
       submitNewTuneUp();
     }}
   >
+    <input required placeholder="Enter new tune up" bind:value={newTuneUp} />
     <input
-      style="display: block"
-      required
-      placeholder="Enter new tune up"
-      bind:value={newTuneUp}
-    />
-    <input
-      style="display: block"
       required
       type="number"
       placeholder="Enter cost"
       bind:value={newTuneUpCost}
     />
-    <button>Submit</button>
+    <button class="icon-btn primary" aria-label="Submit tune up"
+      ><ArrowRight /></button
+    >
   </form>
 </section>
 <section>
@@ -195,9 +214,9 @@
   {/snippet}
   {#snippet employeeActive(employee)}
     {#if employee.active}
-      ACTIVE
+      Active
     {:else}
-      NOT ACTIVE
+      Not active
     {/if}
   {/snippet}
   <h2>Employees</h2>
@@ -215,9 +234,9 @@
       return a.firstName.localeCompare(b.firstName);
     }}
     columns={[
-      { name: "netID", render: employeeNetID },
-      { name: "Name", render: employeeName },
-      { name: "Status", render: employeeActive },
+      { name: "netID", render: employeeNetID, width: "8rem" },
+      { name: "Name", render: employeeName, width: "auto" },
+      { name: "Status", render: employeeActive, width: "auto" },
     ]}
   />
 </section>

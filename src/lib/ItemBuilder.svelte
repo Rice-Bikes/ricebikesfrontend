@@ -33,9 +33,9 @@
     callback(item);
   }}
 >
-  <input required bind:value={name} placeholder="Name" style="display: block" />
-  <input bind:value={brand} placeholder="Brand" style="display: block" />
-  <div>
+  <input required bind:value={name} placeholder="Name" />
+  <input bind:value={brand} placeholder="Brand" />
+  <div class="field-row">
     <input required bind:value={upc} placeholder="UPC" />
     <button type="button" onclick={generateUPC}>Generate UPC</button>
   </div>
@@ -46,7 +46,6 @@
     min="0"
     bind:value={standardPrice}
     placeholder="Standard price"
-    style="display: block"
   />
   <input
     required
@@ -55,13 +54,7 @@
     min="0"
     bind:value={wholesaleCost}
     placeholder="Wholesale cost"
-    style="display: block"
   />
-  <input
-    required
-    bind:value={description}
-    placeholder="Description"
-    style="display: block"
-  />
-  <button>Save</button>
+  <input required bind:value={description} placeholder="Description" />
+  <button class="primary">Save</button>
 </form>

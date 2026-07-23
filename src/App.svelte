@@ -15,18 +15,18 @@
 </script>
 
 <AuthPrompt bind:remaining={authResetRemaining} resetTimeSeconds={60 * 7} />
-<header>
+<header class="app-header">
   <a href="#/">Home</a>
   <a href="#/settings">Settings</a>
+  <span class="spacer"></span>
   {#if appState.user}
-    <span
+    <span class="user-info"
       >{appState.user.firstName}
-      {appState.user.lastName} ({appState.user.netID})</span
+      {appState.user.lastName} ({appState.user.netID}) &middot; {authResetRemaining}s</span
     >
   {:else}
-    <span>Anonymous</span>
+    <span class="user-info">Anonymous</span>
   {/if}
-  <span>{authResetRemaining}</span>
 </header>
 <main>
   <Router {routes} />

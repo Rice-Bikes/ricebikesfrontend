@@ -1,5 +1,8 @@
 <script lang="ts">
   import { rbFetch, stepFromRaw, rawFromStep, type Step } from "$lib/api";
+  import Check from "$lib/icons/Check.svelte";
+  import Trash from "$lib/icons/Trash.svelte";
+  import ArrowRight from "$lib/icons/ArrowRight.svelte";
 
   interface Props {
     steps?: Step[];
@@ -81,28 +84,48 @@
   }
 </script>
 
-{#if steps.length > 0}
-  <ol>
-    {#each steps as step, i (step.id)}
-      <li>
-        {#if step.completed}
-          COMPLETED
-        {/if}
-        {step.description}
-        <button onclick={() => toggleStepCompleted(step, i)}>Complete</button>
-        <button onclick={() => deleteStep(step, i)}>Delete</button>
-      </li>
-    {/each}
-  </ol>
-{:else}
-  <p>No steps</p>
-{/if}
-<form
-  onsubmit={(e) => {
-    e.preventDefault();
-    submitNewStep();
-  }}
->
-  <input placeholder="Enter new step" bind:value={newStep} />
-  <button>Submit</button>
-</form>
+<div style="display: flex; flex-direction: column; gap: var(--space-2)">
+  {#if steps.length > 0}
+    <ul class="entry-list">
+      {#each steps as step, i (step.id)}
+        <li
+          style="max-width: 50ch"
+          class="entry-row"
+          class:completed={step.completed}
+        >
+          <span class="entry-label">{step.description}</span>
+          <span class="entry-actions">
+            <button
+              class="icon-btn success"
+              class:active={step.completed}
+              aria-label={step.completed
+                ? "Mark step incomplete"
+                : "Mark step complete"}
+              onclick={() => toggleStepCompleted(step, i)}><Check /></button
+            >
+            <button
+              class="icon-btn danger"
+              aria-label="Delete step"
+              onclick={() => deleteStep(step, i)}><Trash /></button
+            >
+          </span>
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <p class="muted">No steps</p>
+  {/if}
+  <form
+    class="field-row"
+    style="max-width: 50ch"
+    onsubmit={(e) => {
+      e.preventDefault();
+      submitNewStep();
+    }}
+  >
+    <input style="flex: 1" placeholder="Enter new step" bind:value={newStep} />
+    <button class="icon-btn primary" aria-label="Submit step"
+      ><ArrowRight /></button
+    >
+  </form>
+</div>

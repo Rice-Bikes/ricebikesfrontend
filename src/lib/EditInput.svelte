@@ -1,5 +1,7 @@
 <script lang="ts">
   import type { Snippet } from "svelte";
+  import Pencil from "$lib/icons/Pencil.svelte";
+  import Check from "$lib/icons/Check.svelte";
 
   interface Props {
     callback: (input: string) => void;
@@ -8,6 +10,7 @@
     pattern?: string | null;
     placeholder?: string;
     initial?: string;
+    formatter?: (input: string) => string;
   }
 
   let {
@@ -17,6 +20,7 @@
     pattern = null,
     placeholder = "",
     initial = "",
+    formatter = undefined,
   }: Props = $props();
 
   // svelte-ignore state_referenced_locally
@@ -26,7 +30,7 @@
 
 {#if canEdit}
   <form
-    style="display: inline"
+    class="field-row"
     onsubmit={async (e) => {
       e.preventDefault();
       callback(value);
@@ -41,6 +45,11 @@
       {type}
       {placeholder}
       {pattern}
+      oninput={(e) => {
+        if (formatter) {
+          value = formatter(e.currentTarget.value);
+        }
+      }}
       onkeydown={(e) => {
         if (e.key === "Escape") {
           value = initial;
@@ -48,13 +57,17 @@
         }
       }}
     />
-    <button>Finish</button>
+    <button class="icon-btn success" aria-label="Save"><Check /></button>
   </form>
 {:else}
-  {#if preedit !== null}
-    {@render preedit()}
-  {:else}
-    <input disabled bind:value {placeholder} />
-  {/if}
-  <button onclick={() => (canEdit = true)}>Edit</button>
+  <span class="field-row">
+    {#if preedit !== null}
+      {@render preedit()}
+    {:else}
+      <input disabled bind:value {placeholder} />
+    {/if}
+    <button class="icon-btn" aria-label="Edit" onclick={() => (canEdit = true)}
+      ><Pencil /></button
+    >
+  </span>
 {/if}

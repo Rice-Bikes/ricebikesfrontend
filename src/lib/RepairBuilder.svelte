@@ -17,7 +17,7 @@
     callback(repair);
   }}
 >
-  <input required bind:value={name} placeholder="Name" style="display: block" />
+  <input required bind:value={name} placeholder="Name" />
   <input
     required
     type="number"
@@ -25,12 +25,7 @@
     min="0"
     bind:value={price}
     placeholder="Price"
-    style="display: block"
   />
-  <input
-    bind:value={description}
-    placeholder="Description"
-    style="display: block"
-  />
-  <button>Save</button>
+  <input bind:value={description} placeholder="Description" />
+  <button class="primary">Save</button>
 </form>

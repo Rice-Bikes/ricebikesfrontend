@@ -100,7 +100,7 @@
     callback(transaction);
   }}
 >
-  <select bind:value={transactionType} style="display: block">
+  <select bind:value={transactionType}>
     <option value="inpatient">Inpatient</option>
     <option value="outpatient">Outpatient</option>
     <option value="merch">Merch</option>
@@ -109,7 +109,7 @@
   {#if transactionType !== "retrospec"}
     <CustomerSelector bind:customer {customers} />
   {:else}
-    <select bind:value={retrospecType} style="display: block">
+    <select bind:value={retrospecType}>
       <option value="none"></option>
       <option value="harperSO">Harper (Step-Over/SS)</option>
       <option value="harperPlus">Harper Plus (Step-Over/SS)</option>
@@ -119,7 +119,7 @@
     </select>
   {/if}
   {#if bundles.length > 0}
-    <select bind:value={stepBundleId} style="display: block">
+    <select bind:value={stepBundleId}>
       <option value=""></option>
       {#each bundles as bundle}
         <option value={bundle.id}>{bundle.name}</option>
@@ -127,12 +127,12 @@
     </select>
   {/if}
   {#if tuneups.length > 0}
-    <select bind:value={tuneUpId} style="display: block">
+    <select bind:value={tuneUpId}>
       <option value=""></option>
       {#each tuneups as tuneUp}
         <option value={tuneUp.id}>{tuneUp.name}</option>
       {/each}
     </select>
   {/if}
-  <button>Create</button>
+  <button class="primary">Create</button>
 </form>

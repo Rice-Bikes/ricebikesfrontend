@@ -8,6 +8,7 @@
     type Repair,
   } from "$lib/api";
   import Picker from "$lib/Picker.svelte";
+  import Trash from "$lib/icons/Trash.svelte";
 
   interface Props {
     items?: TuneUpItem[];
@@ -46,25 +47,36 @@
   }
 </script>
 
-{#if items.length > 0}
-  <ol>
-    {#each items as item, i (item.id)}
-      <li>
-        {item.repair.name}
-        <button onclick={() => deleteItem(item, i)}>Delete</button>
-      </li>
-    {/each}
-  </ol>
-{:else}
-  <p>No items</p>
-{/if}
-{#snippet repairRender(repair: Repair)}
-  {repair.name}
-{/snippet}
-<Picker
-  data={repairs}
-  key={(repair) => repair.id}
-  searchKeys={["name"]}
-  render={repairRender}
-  callback={onRepairPicked}
-/>
+<div
+  style="display: flex; flex-direction: column; gap: var(--space-2); max-width: 50ch"
+>
+  {#if items.length > 0}
+    <ul class="entry-list">
+      {#each items as item, i (item.id)}
+        <li class="entry-row">
+          <span class="entry-label">{item.repair.name}</span>
+          <span class="entry-actions">
+            <button
+              class="icon-btn danger"
+              aria-label="Delete item"
+              onclick={() => deleteItem(item, i)}><Trash /></button
+            >
+          </span>
+        </li>
+      {/each}
+    </ul>
+  {:else}
+    <p class="muted">No items</p>
+  {/if}
+  {#snippet repairRender(repair: Repair)}
+    {repair.name}
+  {/snippet}
+  <Picker
+    data={repairs}
+    key={(repair) => repair.id}
+    searchKeys={["name"]}
+    render={repairRender}
+    callback={onRepairPicked}
+    popover
+  />
+</div>

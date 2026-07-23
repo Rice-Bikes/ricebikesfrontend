@@ -42,25 +42,26 @@
   {customer.name} ({customer.email})
 {/snippet}
 
-<p>
-  Customer:
+<p class="field-row">
+  <span>Customer:</span>
   {#if customer !== null}
     {@render customerRender(customer)}
   {:else}
-    None
+    <span class="muted">None</span>
   {/if}
 </p>
 <button onclick={() => (buildingCustomer = !buildingCustomer)} type="button">
   {#if buildingCustomer}
     Close
   {:else}
-    New
+    New customer
   {/if}
 </button>
 <Picker
   data={customers.map((x: Customer) => {
     return { name: `${x.firstName} ${x.lastName}`, ...x };
   })}
+  popover
   key={(customer) => customer.id}
   searchKeys={["name", "email"]}
   render={customerRender}

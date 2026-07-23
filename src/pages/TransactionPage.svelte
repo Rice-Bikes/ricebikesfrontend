@@ -35,6 +35,15 @@
   import StepList from "$lib/StepList.svelte";
   import CustomerSelector from "$lib/CustomerSelector.svelte";
   import { replace } from "svelte-spa-router";
+  import { formatPhoneNumber, titleCase } from "$lib/format";
+  import Trash from "$lib/icons/Trash.svelte";
+  import Check from "$lib/icons/Check.svelte";
+  import ArrowRight from "$lib/icons/ArrowRight.svelte";
+  import ChevronLeft from "$lib/icons/ChevronLeft.svelte";
+  import ChevronRight from "$lib/icons/ChevronRight.svelte";
+  import Plus from "$lib/icons/Plus.svelte";
+  import Info from "$lib/icons/Info.svelte";
+  import X from "$lib/icons/X.svelte";
 
   const { params } = $props();
 
@@ -107,6 +116,47 @@
 
   let repairs = $state<TransactionDetailRepair[]>([]);
   let items = $state<TransactionDetailItem[]>([]);
+
+  interface RepairGroup {
+    tuneUpId: string | null;
+    details: TransactionDetailRepair[];
+  }
+  const repairGroups = $derived.by<RepairGroup[]>(() => {
+    const groups: RepairGroup[] = [];
+    const byTuneUp = new Map<string, TransactionDetailRepair[]>();
+    for (const detail of repairs) {
+      if (detail.tuneUpId !== null) {
+        if (!byTuneUp.has(detail.tuneUpId)) {
+          byTuneUp.set(detail.tuneUpId, []);
+        }
+        byTuneUp.get(detail.tuneUpId)!.push(detail);
+      } else {
+        groups.push({ tuneUpId: null, details: [detail] });
+      }
+    }
+    for (const [tuneUpId, details] of byTuneUp) {
+      groups.push({ tuneUpId, details });
+    }
+    return groups;
+  });
+
+  function tuneUpName(tuneUpId: string): string {
+    return tuneUps.find((t) => t.id === tuneUpId)?.name ?? "Tune up";
+  }
+
+  async function deleteRepairGroup(details: TransactionDetailRepair[]) {
+    for (const detail of details) {
+      const i = repairs.findIndex((r) => r.id === detail.id);
+      if (i !== -1) {
+        repairs.splice(i, 1);
+      }
+    }
+    await Promise.all(
+      details.map((detail) =>
+        rbFetch(`/transactionDetails/${detail.id}`, { method: "DELETE" }),
+      ),
+    );
+  }
 
   type TransactionTag = "beerBike" | "urgent" | "nuclear" | "email";
   const MAX_TAGS_LEN = 4;
@@ -216,6 +266,22 @@
       ) as TransactionDetailRepair[]),
     );
     repairs.sort((a, b) => a.repair.name.localeCompare(b.repair.name));
+  }
+
+  function splitLogEntry(line: string): {
+    message: string;
+    author: string | null;
+  } {
+    const entryLines = line.split("\n");
+    const last = entryLines[entryLines.length - 1];
+    const dashIndex = last.lastIndexOf("-");
+    if (dashIndex === -1) {
+      return { message: line, author: null };
+    }
+    const author = last.slice(dashIndex + 1).trim();
+    const messageLast = last.slice(0, dashIndex).trim();
+    const messageLines = [...entryLines.slice(0, -1), messageLast];
+    return { message: messageLines.join("\n"), author };
   }
 
   let logEntry = $state("");
@@ -492,20 +558,31 @@
 </script>
 
 {#if transaction === undefined}
-  <p>Loading...</p>
+  <p class="muted">Loading...</p>
 {:else}
-  <h1>
-    #{transaction.num}:
-    {#if transaction.customer !== null}
-      {transaction.customer.firstName}
-      {transaction.customer.lastName}
-    {:else}
-      Unreserved
-    {/if}
-    <span>({transaction.transactionType})</span>
-  </h1>
-  <ul>
-    <li><date>{new Date(transaction.dateCreated).toDateString()}</date></li>
+  <div class="field-row">
+    <div class="horizontal-align">
+      <h1>
+        #{transaction.num}:
+        {#if transaction.customer !== null}
+          {transaction.customer.firstName}
+          {transaction.customer.lastName}
+        {:else}
+          Unreserved
+        {/if}
+        <span class="muted">({titleCase(transaction.transactionType)})</span>
+      </h1>
+      <button
+        class="icon-btn danger"
+        aria-label="Delete transaction"
+        onclick={deleteTransaction}><Trash /></button
+      >
+    </div>
+  </div>
+  <ul class="tag-list" style="margin-top: var(--space-2)">
+    <li class="faint">
+      <date>{new Date(transaction.dateCreated).toDateString()}</date>
+    </li>
     {#if transaction.customer !== null}
       <li>
         {#snippet renderEmail()}
@@ -525,10 +602,10 @@
         {#snippet renderPhone()}
           {#if transaction!.customer!.phone}
             <a href={`tel:+${transaction!.customer!.phone}`}
-              >{transaction!.customer!.phone}</a
+              >{formatPhoneNumber(transaction!.customer!.phone)}</a
             >
           {:else}
-            None
+            <span class="muted">None</span>
           {/if}
         {/snippet}
         <EditInput
@@ -537,43 +614,62 @@
           placeholder="Customer phone"
           callback={(phone) => updateCustomer({ phone })}
           preedit={renderPhone}
+          formatter={formatPhoneNumber}
         />
       </li>
     {/if}
   </ul>
-  <div>
-    <span>Tags</span>
-    <ul>
+  <div class="field-row" style="margin-top: var(--space-3)">
+    <span class="muted">Tags</span>
+    <ul class="tag-list">
       {#each tags as tag}
-        <li>
-          <button onclick={() => removeTag(tag)}
-            >{transactionTagToString(tag)}</button
+        <li class="tag">
+          {transactionTagToString(tag)}
+          <button
+            class="icon-btn"
+            aria-label={`Remove ${transactionTagToString(tag)} tag`}
+            onclick={() => removeTag(tag)}><X /></button
           >
         </li>
       {/each}
     </ul>
     {#if tags.length < MAX_TAGS_LEN}
-      <button popovertarget="tags-options">+</button>
-      <ul id="tags-options" popover="auto">
-        {#each ["urgent", "beerBike", "nuclear", "email"] as tag}
-          {#if !tags.includes(tag as TransactionTag)}
-            <li>
-              <button onclick={() => addTag(tag as TransactionTag)}
-                >{transactionTagToString(tag as TransactionTag)}</button
-              >
-            </li>
-          {/if}
-        {/each}
-      </ul>
+      <button
+        id="tags-add-btn"
+        class="icon-btn"
+        aria-label="Add tag"
+        style="anchor-name: --tags-anchor"
+        popovertarget="tags-options"><Plus /></button
+      >
+      <div
+        id="tags-options"
+        popover="auto"
+        style="position-anchor: --tags-anchor"
+      >
+        <ul style="height: inherit" class="picker-list">
+          {#each ["urgent", "beerBike", "nuclear", "email"] as tag}
+            {#if !tags.includes(tag as TransactionTag)}
+              <li>
+                <button onclick={() => addTag(tag as TransactionTag)}
+                  >{transactionTagToString(tag as TransactionTag)}</button
+                >
+              </li>
+            {/if}
+          {/each}
+        </ul>
+      </div>
     {/if}
   </div>
   {#if transaction.customer === null}
     <button
+      class="primary"
+      style="margin-top: var(--space-3)"
       onclick={() => customerSelectorKey++}
       command="show-modal"
       commandfor="customer-dialog">Reserve</button
     >
-    <dialog id="customer-dialog">
+    <dialog id="customer-dialog" style="height: 30rem">
+      <h2>Reserve transaction</h2>
       <form
         onsubmit={(e) => {
           e.preventDefault();
@@ -586,32 +682,36 @@
             customers={allCustomers}
           />
         {/key}
-        <button>Save</button>
+        <button class="primary">Save</button>
       </form>
-      <button commandfor="customer-dialog" command="close">Close</button>
+      <div class="dialog-actions">
+        <button commandfor="customer-dialog" command="close">Close</button>
+      </div>
     </dialog>
   {/if}
-  <button onclick={deleteTransaction}>Delete</button>
   {#if transaction.bike}
     <section>
       <h2>Bike Info</h2>
-      <div>
-        <div>
-          Make <EditInput
+      <div style="display: flex; flex-direction: column; gap: var(--space-2)">
+        <div class="field-row">
+          <span class="muted">Make</span>
+          <EditInput
             initial={transaction.bike.make}
             callback={(make) => updateBike({ make })}
             placeholder="Enter bike make"
           />
         </div>
-        <div>
-          Model <EditInput
+        <div class="field-row">
+          <span class="muted">Model</span>
+          <EditInput
             initial={transaction.bike.model}
             callback={(model) => updateBike({ model })}
             placeholder="Enter bike model"
           />
         </div>
-        <div>
-          Description <EditInput
+        <div class="field-row">
+          <span class="muted">Description</span>
+          <EditInput
             initial={transaction.bike.description}
             callback={(description) => updateBike({ description })}
             placeholder="Enter bike description"
@@ -620,139 +720,298 @@
       </div>
     </section>
   {/if}
-  <section style="width: 80ch">
+  <section>
     <h2>Logs</h2>
-    <ol>
-      {#each logs as line}
-        <li>{line}</li>
-      {/each}
-    </ol>
-    <form
-      onsubmit={(e) => {
-        e.preventDefault();
-        submitLogEntry();
-      }}
-    >
-      <input placeholder="Enter log entry" bind:value={logEntry} />
-      <button>Submit</button>
-    </form>
+    <div style="max-width: 80ch; text-wrap: pretty">
+      <ol class="log-list">
+        {#each logs as line}
+          {@const parsed = splitLogEntry(line)}
+          <li class="log-entry">
+            <span class="log-message">{parsed.message}</span>
+            {#if parsed.author}
+              <span class="log-meta">{parsed.author}</span>
+            {/if}
+          </li>
+        {/each}
+      </ol>
+      <form
+        class="field-row"
+        style="margin-top: var(--space-3)"
+        onsubmit={(e) => {
+          e.preventDefault();
+          submitLogEntry();
+        }}
+      >
+        <input
+          style="flex: 1"
+          placeholder="Enter log entry"
+          bind:value={logEntry}
+        />
+        <button class="icon-btn primary" aria-label="Submit log entry"
+          ><ArrowRight /></button
+        >
+      </form>
+    </div>
   </section>
   <section>
-    <h2>Parts & Repairs</h2>
-    <div>
-      <div>
-        <ul>
-          {#each items as detail, i (detail.id)}
-            <li>
-              Item: {detail.item.name} ${detail.item.standardPrice}<button
-                onclick={() => deleteTransactionDetail(i, detail)}
-                >Delete</button
+    <h2>Parts &amp; Repairs</h2>
+    <div class="parts-repairs-grid">
+      <div class="column">
+        <div class="column-header"><h3>Parts</h3></div>
+        {#if items.length > 0}
+          <ul class="entry-list">
+            {#each items as detail, i (detail.id)}
+              <li style="width: 100%" class="entry-row">
+                <span style="text-wrap: wrap" class="entry-label"
+                  >{detail.item.name} &mdash; ${detail.item.standardPrice}</span
+                >
+                <span class="entry-actions">
+                  <button
+                    class="icon-btn danger"
+                    aria-label="Delete part"
+                    onclick={() => deleteTransactionDetail(i, detail)}
+                    ><Trash /></button
+                  >
+                </span>
+              </li>
+            {/each}
+          </ul>
+        {:else}
+          <p class="muted">No parts added</p>
+        {/if}
+        <button
+          class="primary"
+          style="margin-top: var(--space-3)"
+          onclick={() => itemPickerKey++}
+          command="show-modal"
+          commandfor="item-dialog"><Plus /> Add part</button
+        >
+        <dialog id="item-dialog" style="height: 25rem">
+          <div style="display: flex; flex-direction: column; height: 100%;">
+            <h2>Add part</h2>
+            {#snippet itemRender(item: Item)}
+              {item.name} &mdash; ${item.standardPrice}
+            {/snippet}
+            {#key itemPickerKey}
+              <Picker
+                data={allItems}
+                key={(item) => item.id}
+                searchKeys={["name"]}
+                render={itemRender}
+                callback={onItemPicked}
+                placeholder="Search parts"
+              />
+            {/key}
+            <div style="flex: 1; min-height: 0"></div>
+            <div class="dialog-actions">
+              <button
+                onclick={() => itemBuilderKey++}
+                command="show-modal"
+                commandfor="new-item-dialog"><Plus /> New part</button
               >
-            </li>
-          {/each}
-        </ul>
+              <button command="close" commandfor="item-dialog">Close</button>
+            </div>
+          </div>
+        </dialog>
+        <dialog id="new-item-dialog">
+          <h2>New part</h2>
+          {#key itemBuilderKey}
+            <ItemBuilder callback={onItemBuilt} />
+          {/key}
+          <div class="dialog-actions">
+            <button command="close" commandfor="new-item-dialog">Cancel</button>
+          </div>
+        </dialog>
       </div>
-      <div>
-        <ul>
-          {#each repairs as detail, i (detail.id)}
-            <li>
-              {#if detail.completed}
-                COMPLETED
+      <div class="column">
+        <div class="column-header"><h3>Repairs</h3></div>
+        {#if repairGroups.length > 0}
+          <ul class="entry-list">
+            {#each repairGroups as group (group.tuneUpId ?? group.details[0].id)}
+              {#if group.tuneUpId !== null}
+                <li style="width: 100%" class="repair-group">
+                  <div class="repair-group-header">
+                    <span class="entry-label"
+                      >Tune up: {tuneUpName(group.tuneUpId)}</span
+                    >
+                    <button
+                      class="icon-btn danger"
+                      aria-label="Delete tune up group"
+                      onclick={() => deleteRepairGroup(group.details)}
+                      ><Trash /></button
+                    >
+                  </div>
+                  <ul class="entry-list">
+                    {#each group.details as detail (detail.id)}
+                      <li
+                        style="width: 100%"
+                        class="entry-row"
+                        class:completed={detail.completed}
+                      >
+                        <span style="text-wrap: wrap" class="entry-label"
+                          >{detail.repair.name} &mdash; ${detail.repair
+                            .price}</span
+                        >
+                        <span class="entry-actions">
+                          <button
+                            class="icon-btn"
+                            style="anchor-name: {`--info-${detail.id}`}"
+                            popovertarget={`description-${detail.id}`}
+                            aria-label="Repair details"><Info /></button
+                          >
+                          <button
+                            class="icon-btn success"
+                            class:active={detail.completed}
+                            aria-label={detail.completed
+                              ? "Mark repair incomplete"
+                              : "Mark repair complete"}
+                            onclick={() =>
+                              toggleRepairCompleted(
+                                repairs.indexOf(detail),
+                                detail,
+                              )}><Check /></button
+                          >
+                        </span>
+                        <p
+                          id={`description-${detail.id}`}
+                          popover
+                          style="position-anchor: {`--info-${detail.id}`}; max-width: 45ch"
+                        >
+                          {detail.repair.description}
+                        </p>
+                      </li>
+                    {/each}
+                  </ul>
+                </li>
+              {:else}
+                {@const detail = group.details[0]}
+                <li
+                  style="width: 100%"
+                  class="entry-row"
+                  class:completed={detail.completed}
+                >
+                  <span style="text-wrap: wrap" class="entry-label"
+                    >{detail.repair.name} &mdash; ${detail.repair.price}</span
+                  >
+                  <span class="entry-actions">
+                    <button
+                      class="icon-btn"
+                      style="anchor-name: {`--info-${detail.id}`}"
+                      popovertarget={`description-${detail.id}`}
+                      aria-label="Repair details"><Info /></button
+                    >
+                    <button
+                      class="icon-btn success"
+                      class:active={detail.completed}
+                      aria-label={detail.completed
+                        ? "Mark repair incomplete"
+                        : "Mark repair complete"}
+                      onclick={() =>
+                        toggleRepairCompleted(repairs.indexOf(detail), detail)}
+                      ><Check /></button
+                    >
+                    <button
+                      class="icon-btn danger"
+                      aria-label="Delete repair"
+                      onclick={() =>
+                        deleteTransactionDetail(
+                          repairs.indexOf(detail),
+                          detail,
+                        )}><Trash /></button
+                    >
+                  </span>
+                  <p
+                    id={`description-${detail.id}`}
+                    popover
+                    style="position-anchor: {`--info-${detail.id}`}; max-width: 45ch"
+                  >
+                    {detail.repair.description}
+                  </p>
+                </li>
               {/if}
-              Repair: {detail.repair.name} ${detail.repair.price}<button
-                popovertarget={`description-${detail.id}`}>Info</button
-              ><button onclick={() => deleteTransactionDetail(i, detail)}
-                >Delete</button
-              ><button onclick={() => toggleRepairCompleted(i, detail)}
-                >Complete</button
+            {/each}
+          </ul>
+        {:else}
+          <p class="muted">No repairs added</p>
+        {/if}
+        <div class="field-row" style="margin-top: var(--space-3)">
+          <button
+            class="primary"
+            onclick={() => repairPickerKey++}
+            command="show-modal"
+            commandfor="repair-dialog"><Plus /> Add repair</button
+          >
+          <button
+            command="show-modal"
+            onclick={() => tuneUpPickerKey++}
+            commandfor="tuneup-dialog"><Plus /> Add tune up</button
+          >
+        </div>
+        <dialog id="repair-dialog" style="height: 25rem">
+          <div style="display: flex; flex-direction: column; height: 100%;">
+            <h2>Add repair</h2>
+            {#snippet repairRender(repair: Repair)}
+              {repair.name} &mdash; ${repair.price}
+            {/snippet}
+            {#key repairPickerKey}
+              <Picker
+                data={allRepairs}
+                key={(repair) => repair.id}
+                searchKeys={["name"]}
+                render={repairRender}
+                callback={onRepairPicked}
+                placeholder="Search repairs"
+              />
+            {/key}
+            <div style="flex: 1; min-height: 0"></div>
+            <div class="dialog-actions">
+              <button
+                onclick={() => repairBuilderKey++}
+                command="show-modal"
+                commandfor="new-repair-dialog"><Plus /> New repair</button
               >
-              <p id={`description-${detail.id}`} popover>
-                {detail.repair.description}
-              </p>
-            </li>
-          {/each}
-        </ul>
+              <button commandfor="repair-dialog" command="close">Close</button>
+            </div>
+          </div>
+        </dialog>
+        <dialog id="new-repair-dialog">
+          <h2>New repair</h2>
+          {#key repairBuilderKey}
+            <RepairBuilder callback={onRepairBuilt} />
+          {/key}
+          <div class="dialog-actions">
+            <button command="close" commandfor="new-repair-dialog"
+              >Cancel</button
+            >
+          </div>
+        </dialog>
+        {#snippet tuneUpRender(tuneUp: TuneUp)}
+          {tuneUp.name} &mdash; ${tuneUp.cost}
+        {/snippet}
+        <dialog id="tuneup-dialog" style="height: 25rem">
+          <div style="display: flex; flex-direction: column; height: 100%;">
+            <h2>Add tune up</h2>
+            {#key tuneUpPickerKey}
+              <Picker
+                data={tuneUps}
+                key={(tuneUp) => tuneUp.id}
+                searchKeys={["name"]}
+                render={tuneUpRender}
+                callback={onTuneUpPicked}
+                placeholder="Search tune ups"
+              />
+            {/key}
+            <div style="flex: 1; min-height: 0"></div>
+            <div class="dialog-actions">
+              <button commandfor="tuneup-dialog" command="close">Close</button>
+            </div>
+          </div>
+        </dialog>
       </div>
     </div>
-    <p>Total: ${totalPrice}</p>
-    <button
-      onclick={() => itemPickerKey++}
-      command="show-modal"
-      commandfor="item-dialog">Add part</button
-    >
-    <dialog id="item-dialog">
-      {#snippet itemRender(item: Item)}
-        {item.name} ${item.standardPrice}
-      {/snippet}
-      {#key itemPickerKey}
-        <Picker
-          data={allItems}
-          key={(item) => item.id}
-          searchKeys={["name"]}
-          render={itemRender}
-          callback={onItemPicked}
-        />
-      {/key}
-      <button
-        onclick={() => itemBuilderKey++}
-        command="show-modal"
-        commandfor="new-item-dialog">New</button
-      >
-      <button command="close" commandfor="item-dialog">Close</button>
-    </dialog>
-    <dialog id="new-item-dialog">
-      {#key itemBuilderKey}
-        <ItemBuilder callback={onItemBuilt} />
-      {/key}
-      <button command="close" commandfor="new-item-dialog">Cancel</button>
-    </dialog>
-    <button
-      onclick={() => repairPickerKey++}
-      command="show-modal"
-      commandfor="repair-dialog">Add repair</button
-    >
-    <dialog id="repair-dialog">
-      {#snippet repairRender(repair: Repair)}
-        {repair.name} ${repair.price}
-      {/snippet}
-      {#key repairPickerKey}
-        <Picker
-          data={allRepairs}
-          key={(repair) => repair.id}
-          searchKeys={["name"]}
-          render={repairRender}
-          callback={onRepairPicked}
-        />
-      {/key}
-      <button
-        onclick={() => repairBuilderKey++}
-        command="show-modal"
-        commandfor="new-repair-dialog">New</button
-      >
-      <button commandfor="repair-dialog" command="close">Close</button>
-    </dialog>
-    <dialog id="new-repair-dialog">
-      {#key repairBuilderKey}
-        <RepairBuilder callback={onRepairBuilt} />
-      {/key}
-      <button command="close" commandfor="new-repair-dialog">Cancel</button>
-    </dialog>
-    <button command="show-modal" commandfor="tuneup-dialog">Add tune up</button>
-    {#snippet tuneUpRender(tuneUp: TuneUp)}
-      {tuneUp.name} ${tuneUp.cost}
-    {/snippet}
-    <dialog id="tuneup-dialog">
-      {#key tuneUpPickerKey}
-        <Picker
-          data={tuneUps}
-          key={(tuneUp) => tuneUp.id}
-          searchKeys={["name"]}
-          render={tuneUpRender}
-          callback={onTuneUpPicked}
-        />
-      {/key}
-      <button commandfor="tuneup-dialog" command="close">Close</button>
-    </dialog>
+    <p style="margin-top: var(--space-4); font-weight: 600">
+      Total: ${totalPrice}
+    </p>
   </section>
   <section>
     <h2>Steps</h2>
@@ -760,33 +1019,39 @@
   </section>
   <section>
     <h2>Stage</h2>
-    <button
-      disabled={!transaction.isCompleted}
-      onclick={() => deadvanceStage()}
-    >
-      &lt;
-    </button>
-    <span>
-      {#if transaction.isCompleted}
-        {#if transaction.isPaid}
-          Paid
+    <div class="stage-control">
+      <button
+        class="icon-btn"
+        aria-label="Move to previous stage"
+        disabled={!transaction.isCompleted}
+        onclick={() => deadvanceStage()}
+      >
+        <ChevronLeft />
+      </button>
+      <span class="stage-label">
+        {#if transaction.isCompleted}
+          {#if transaction.isPaid}
+            Paid
+          {:else}
+            Complete
+          {/if}
         {:else}
-          Complete
+          Not completed
         {/if}
-      {:else}
-        Not completed
-      {/if}
-    </span>
-    <button
-      onclick={() => advanceStage()}
-      disabled={!canAdvance || transaction.isPaid}
-    >
-      &gt;
-    </button>
+      </span>
+      <button
+        class="icon-btn"
+        aria-label="Advance stage"
+        onclick={() => advanceStage()}
+        disabled={!canAdvance || transaction.isPaid}
+      >
+        <ChevronRight />
+      </button>
+    </div>
     {#if !canAdvance}
-      <ul>
+      <ul style="margin-top: var(--space-2)">
         {#each cannotAdvanceReasons as reason}
-          <li>{reason}</li>
+          <li class="faint">{reason}</li>
         {/each}
       </ul>
     {/if}

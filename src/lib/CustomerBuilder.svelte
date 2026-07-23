@@ -1,5 +1,6 @@
 <script lang="ts">
   import { type NewCustomer } from "$lib/api";
+  import { formatPhoneNumber } from "$lib/format";
 
   interface Props {
     callback: (customer: NewCustomer) => void;
@@ -10,7 +11,7 @@
   let firstName = $state("");
   let lastName = $state("");
   let email = $state("");
-  let phone: string | null = $state("");
+  let phone: string = $state("");
   let customer = $derived({
     firstName,
     lastName,
@@ -25,30 +26,14 @@
     callback(customer);
   }}
 >
+  <input required bind:value={firstName} placeholder="First name" />
+  <input required bind:value={lastName} placeholder="Last name" />
+  <input required bind:value={email} placeholder="Email" type="email" />
   <input
-    required
-    bind:value={firstName}
-    placeholder="First name"
-    style="display: block"
-  />
-  <input
-    required
-    bind:value={lastName}
-    placeholder="Last name"
-    style="display: block"
-  />
-  <input
-    required
-    bind:value={email}
-    placeholder="Email"
-    type="email"
-    style="display: block"
-  />
-  <input
-    bind:value={phone}
+    value={phone}
+    oninput={(e) => (phone = formatPhoneNumber(e.currentTarget.value))}
     placeholder="Phone"
-    type="phone"
-    style="display: block"
+    type="tel"
   />
-  <button>Create</button>
+  <button class="primary">Create</button>
 </form>

@@ -13,8 +13,10 @@
     type StepBundle,
     type TuneUp,
   } from "$lib/api";
+  import { titleCase } from "$lib/format";
   import Table from "$lib/Table.svelte";
   import TransactionBuilder from "$lib/TransactionBuilder.svelte";
+  import Plus from "$lib/icons/Plus.svelte";
   import beerSymbol from "../assets/beer.svg";
   import nuclearSymbol from "../assets/nuclear.svg";
   import employeeSymbol from "../assets/person.svg";
@@ -149,7 +151,7 @@
   >
 {/snippet}
 {#snippet transactionType(transaction: Transaction)}
-  <span>{transaction.transactionType}</span>
+  <span>{titleCase(transaction.transactionType)}</span>
 {/snippet}
 {#snippet transactionCreated(transaction: Transaction)}
   <date>{transaction.dateCreated.toDateString()}</date>
@@ -158,39 +160,62 @@
   <span>{transaction.bike?.make} {transaction.bike?.model}</span>
 {/snippet}
 {#snippet transactionTagsColumn(transaction: Transaction)}
-  {#if transaction.isUrgent}
-    <img src={urgentSymbol} alt="Urgent symbol" width="22" height="22" />
-  {/if}
-  {#if transaction.isBeerBike}
-    <img src={beerSymbol} alt="Beer symbol" width="22" height="22" />
-  {/if}
-  {#if transaction.isEmployee}
-    <img src={employeeSymbol} alt="Employee symbol" width="22" height="22" />
-  {/if}
-  {#if transaction.isNuclear}
-    <img src={nuclearSymbol} alt="Nuclear symbol" width="22" height="22" />
-  {/if}
-  {#if transaction.isWaitingOnEmail}
-    <img src={emailSymbol} alt="Email symbol" width="22" height="22" />
-  {/if}
+  <ul class="tag-icon-list">
+    {#if transaction.isUrgent}
+      <li>
+        <img src={urgentSymbol} alt="Urgent symbol" width="22" height="22" />
+      </li>
+    {/if}
+    {#if transaction.isBeerBike}
+      <li>
+        <img src={beerSymbol} alt="Beer symbol" width="22" height="22" />
+      </li>
+    {/if}
+    {#if transaction.isEmployee}
+      <li>
+        <img
+          src={employeeSymbol}
+          alt="Employee symbol"
+          width="22"
+          height="22"
+        />
+      </li>
+    {/if}
+    {#if transaction.isNuclear}
+      <li>
+        <img src={nuclearSymbol} alt="Nuclear symbol" width="22" height="22" />
+      </li>
+    {/if}
+    {#if transaction.isWaitingOnEmail}
+      <li>
+        <img src={emailSymbol} alt="Email symbol" width="22" height="22" />
+      </li>
+    {/if}
+  </ul>
 {/snippet}
 
 <h1>Transactions</h1>
 
 {#await filteredTransactions}
-  <p>Loading...</p>
+  <p class="muted">Loading...</p>
 {:then transactions: Transaction[]}
-  <select bind:value={view}>
-    <option value="main">Main</option>
-    <option value="builds">Builds</option>
-    <option value="beerBikes">Beer bikes</option>
-  </select>
-  <button
-    onclick={() => transactionBuilderKey++}
-    command="show-modal"
-    commandfor="transaction-dialog">New</button
-  >
+  <div class="field-row" style="margin-bottom: var(--space-4)">
+    <select bind:value={view}>
+      <option value="main">Main</option>
+      <option value="builds">Builds</option>
+      <option value="beerBikes">Beer bikes</option>
+    </select>
+    <button
+      class="primary"
+      onclick={() => transactionBuilderKey++}
+      command="show-modal"
+      commandfor="transaction-dialog"><Plus /> New</button
+    >
+    <span class="spacer" style="flex: 1"></span>
+    <span class="muted">{transactions.length} transactions</span>
+  </div>
   <dialog id="transaction-dialog">
+    <h2>New transaction</h2>
     {#key transactionBuilderKey}
       <TransactionBuilder
         customers={allCustomers}
@@ -199,9 +224,10 @@
         callback={onTransactionBuilt}
       />
     {/key}
-    <button commandfor="transaction-dialog" command="close">Close</button>
+    <div class="dialog-actions">
+      <button commandfor="transaction-dialog" command="close">Close</button>
+    </div>
   </dialog>
-  <p>{transactions.length} transactions</p>
   <Table
     bind:page={transactionTablePage}
     data={transactions}
@@ -212,26 +238,32 @@
       {
         name: "#",
         render: transactionNumColumn,
+        width: "8ch",
       },
       {
         name: "Tags",
         render: transactionTagsColumn,
+        width: "5rem",
       },
       {
         name: "Type",
         render: transactionType,
+        width: "12ch",
       },
       {
         name: "Customer",
         render: transactionName,
+        width: "20ch",
       },
       {
         name: "Bike",
         render: transactionBike,
+        width: "auto",
       },
       {
         name: "Created",
         render: transactionCreated,
+        width: "auto",
       },
     ]}
   />
