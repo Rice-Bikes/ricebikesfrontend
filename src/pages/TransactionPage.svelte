@@ -669,7 +669,15 @@
       commandfor="customer-dialog">Reserve</button
     >
     <dialog id="customer-dialog" style="height: 30rem">
-      <h2>Reserve transaction</h2>
+      <div class="dialog-header">
+        <h2>Reserve transaction</h2>
+        <button
+          class="icon-btn dialog-close"
+          command="close"
+          commandfor="customer-dialog"
+          aria-label="Close"><X /></button
+        >
+      </div>
       <form
         onsubmit={(e) => {
           e.preventDefault();
@@ -684,9 +692,6 @@
         {/key}
         <button class="primary">Save</button>
       </form>
-      <div class="dialog-actions">
-        <button commandfor="customer-dialog" command="close">Close</button>
-      </div>
     </dialog>
   {/if}
   {#if transaction.bike}
@@ -788,7 +793,15 @@
         >
         <dialog id="item-dialog" style="height: 25rem">
           <div style="display: flex; flex-direction: column; height: 100%;">
-            <h2>Add part</h2>
+            <div class="dialog-header">
+              <h2>Add part</h2>
+              <button
+                class="icon-btn dialog-close"
+                command="close"
+                commandfor="item-dialog"
+                aria-label="Close"><X /></button
+              >
+            </div>
             {#snippet itemRender(item: Item)}
               {item.name} &mdash; ${item.standardPrice}
             {/snippet}
@@ -809,18 +822,22 @@
                 command="show-modal"
                 commandfor="new-item-dialog"><Plus /> New part</button
               >
-              <button command="close" commandfor="item-dialog">Close</button>
             </div>
           </div>
         </dialog>
         <dialog id="new-item-dialog">
-          <h2>New part</h2>
+          <div class="dialog-header">
+            <h2>New part</h2>
+            <button
+              class="icon-btn dialog-close"
+              command="close"
+              commandfor="new-item-dialog"
+              aria-label="Close"><X /></button
+            >
+          </div>
           {#key itemBuilderKey}
             <ItemBuilder callback={onItemBuilt} />
           {/key}
-          <div class="dialog-actions">
-            <button command="close" commandfor="new-item-dialog">Cancel</button>
-          </div>
         </dialog>
       </div>
       <div class="column">
@@ -949,7 +966,15 @@
         </div>
         <dialog id="repair-dialog" style="height: 25rem">
           <div style="display: flex; flex-direction: column; height: 100%;">
-            <h2>Add repair</h2>
+            <div class="dialog-header">
+              <h2>Add repair</h2>
+              <button
+                class="icon-btn dialog-close"
+                command="close"
+                commandfor="repair-dialog"
+                aria-label="Close"><X /></button
+              >
+            </div>
             {#snippet repairRender(repair: Repair)}
               {repair.name} &mdash; ${repair.price}
             {/snippet}
@@ -970,27 +995,37 @@
                 command="show-modal"
                 commandfor="new-repair-dialog"><Plus /> New repair</button
               >
-              <button commandfor="repair-dialog" command="close">Close</button>
             </div>
           </div>
         </dialog>
         <dialog id="new-repair-dialog">
-          <h2>New repair</h2>
+          <div class="dialog-header">
+            <h2>New repair</h2>
+            <button
+              class="icon-btn dialog-close"
+              command="close"
+              commandfor="new-repair-dialog"
+              aria-label="Close"><X /></button
+            >
+          </div>
           {#key repairBuilderKey}
             <RepairBuilder callback={onRepairBuilt} />
           {/key}
-          <div class="dialog-actions">
-            <button command="close" commandfor="new-repair-dialog"
-              >Cancel</button
-            >
-          </div>
         </dialog>
         {#snippet tuneUpRender(tuneUp: TuneUp)}
           {tuneUp.name} &mdash; ${tuneUp.cost}
         {/snippet}
         <dialog id="tuneup-dialog" style="height: 25rem">
           <div style="display: flex; flex-direction: column; height: 100%;">
-            <h2>Add tune up</h2>
+            <div class="dialog-header">
+              <h2>Add tune up</h2>
+              <button
+                class="icon-btn dialog-close"
+                command="close"
+                commandfor="tuneup-dialog"
+                aria-label="Close"><X /></button
+              >
+            </div>
             {#key tuneUpPickerKey}
               <Picker
                 data={tuneUps}
@@ -1002,9 +1037,6 @@
               />
             {/key}
             <div style="flex: 1; min-height: 0"></div>
-            <div class="dialog-actions">
-              <button commandfor="tuneup-dialog" command="close">Close</button>
-            </div>
           </div>
         </dialog>
       </div>

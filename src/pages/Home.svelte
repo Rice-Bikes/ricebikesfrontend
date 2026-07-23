@@ -17,6 +17,7 @@
   import Table from "$lib/Table.svelte";
   import TransactionBuilder from "$lib/TransactionBuilder.svelte";
   import Plus from "$lib/icons/Plus.svelte";
+  import X from "$lib/icons/X.svelte";
   import beerSymbol from "../assets/beer.svg";
   import nuclearSymbol from "../assets/nuclear.svg";
   import employeeSymbol from "../assets/person.svg";
@@ -215,7 +216,15 @@
     <span class="muted">{transactions.length} transactions</span>
   </div>
   <dialog id="transaction-dialog">
-    <h2>New transaction</h2>
+    <div class="dialog-header">
+      <h2>New transaction</h2>
+      <button
+        class="icon-btn dialog-close"
+        command="close"
+        commandfor="transaction-dialog"
+        aria-label="Close"><X /></button
+      >
+    </div>
     {#key transactionBuilderKey}
       <TransactionBuilder
         customers={allCustomers}
@@ -224,9 +233,6 @@
         callback={onTransactionBuilt}
       />
     {/key}
-    <div class="dialog-actions">
-      <button commandfor="transaction-dialog" command="close">Close</button>
-    </div>
   </dialog>
   <Table
     bind:page={transactionTablePage}
