@@ -8,6 +8,7 @@
     type Repair,
   } from "$lib/api";
   import Picker from "$lib/Picker.svelte";
+  import Info from "$lib/icons/Info.svelte";
   import Trash from "$lib/icons/Trash.svelte";
 
   interface Props {
@@ -57,11 +58,24 @@
           <span class="entry-label">{item.repair.name}</span>
           <span class="entry-actions">
             <button
+              class="icon-btn"
+              style="anchor-name: {`--info-${tuneup.id}-${item.id}`}"
+              popovertarget={`description-${tuneup.id}-${item.id}`}
+              aria-label="Repair details"><Info /></button
+            >
+            <button
               class="icon-btn danger"
               aria-label="Delete item"
               onclick={() => deleteItem(item, i)}><Trash /></button
             >
           </span>
+          <p
+            id={`description-${tuneup.id}-${item.id}`}
+            popover
+            style="position-anchor: {`--info-${tuneup.id}-${item.id}`}; max-width: 45ch"
+          >
+            {item.repair.description}
+          </p>
         </li>
       {/each}
     </ul>

@@ -128,6 +128,46 @@ export interface TransactionDetailRepair {
 
 export type TransactionDetail = TransactionDetailItem | TransactionDetailRepair;
 
+export interface HistoryEntry {
+  id: string;
+  transactionNum: number;
+  changedBy: User;
+  description: string;
+  changeType: string;
+  date: Date;
+}
+
+export interface OrderRequest {
+  id: string;
+  createdBy: User;
+  ordered: boolean;
+  notes: string;
+  dateCreated: Date;
+  item: Item;
+  transaction: Transaction;
+  quantitiy: number;
+}
+
+export interface OrderRequest {
+  id: string;
+  createdBy: User;
+  ordered: boolean;
+  notes: string;
+  dateCreated: Date;
+  item: Item;
+  transaction: Transaction;
+  quantitiy: number;
+}
+
+export interface NewOrderRequest {
+  createdBy: string;
+  ordered: boolean;
+  notes: string;
+  itemId: string;
+  transactionId: string;
+  quantitiy: number;
+}
+
 export class RbError extends Error {
   constructor(
     public readonly status: number,
@@ -417,5 +457,57 @@ export function rawFromTransactionDetail(
     if (detail.tuneUpId !== undefined) raw.tune_up_id = detail.tuneUpId;
     if (detail.repair !== undefined) raw.Repair = rawFromRepair(detail.repair);
   }
+  return raw;
+}
+
+export function historyEntryFromRaw(raw: any): HistoryEntry {
+  return {
+    id: raw.log_id,
+    transactionNum: raw.transaction_num,
+    changedBy: userFromRaw(raw.Users),
+    description: raw.description,
+    changeType: raw.change_type,
+    date: new Date(raw.dateModified),
+  };
+}
+
+export function rawFromHistoryEntry(entry: Partial<HistoryEntry>): any {
+  const raw: any = {};
+  if (entry.id !== undefined) raw.log_id = entry.id;
+  if (entry.transactionNum !== undefined)
+    raw.transaction_num = entry.transactionNum;
+  if (entry.changedBy !== undefined) raw.changed_by = entry.changedBy.id;
+  if (entry.description !== undefined) raw.description = entry.description;
+  if (entry.changeType !== undefined) raw.change_type = entry.changeType;
+  if (entry.date !== undefined) raw.date = entry.date.toISOString();
+  return raw;
+}
+
+export function orderRequestFromRaw(raw: any): OrderRequest {
+  return {
+    id: raw.order_request_id,
+    createdBy: userFromRaw(raw.User),
+    ordered: raw.ordered,
+    notes: raw.notes ?? "",
+    dateCreated: new Date(raw.date_created),
+    transaction: transactionFromRaw(raw.Transaction),
+    item: itemFromRaw(raw.Item),
+    quantity: raw.quantity,
+  };
+}
+
+export function rawFromOrderRequest(orderRequest: Partial<OrderRequest>): any {
+  const raw: any = {};
+  if (orderRequest.id !== undefined) raw.order_request_id = orderRequest.id;
+  if (orderRequest.createdBy !== undefined)
+    raw.created_by = orderRequest.createdBy.id;
+  if (orderRequest.ordered !== undefined) raw.ordered = orderRequest.ordered;
+  if (orderRequest.notes !== undefined) raw.notes = orderRequest.notes;
+  if (orderRequest.dateCreated !== undefined)
+    raw.date_created = orderRequest.dateCreated.toISOString();
+  if (orderRequest.transactionId !== undefined)
+    raw.transaction_id = orderRequest.transactionId;
+  if (orderRequest.quantity !== undefined) raw.quantity = orderRequest.quantity;
+  if (orderRequest.item !== undefined) raw.item_id = orderRequest.item.id;
   return raw;
 }

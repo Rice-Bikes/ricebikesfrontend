@@ -21,6 +21,9 @@
   --color-danger-hover: #a5301f;
   --color-danger-soft: #fbeae8;
 
+  --color-warning: #b45309;
+  --color-warning-soft: #fdf1d6;
+
   --color-success: #2f855a;
   --color-success-soft: #e6f4ec;
 
@@ -65,6 +68,9 @@
   --color-danger: #e2685c;
   --color-danger-hover: #eb8277;
   --color-danger-soft: #3a201d;
+
+  --color-warning: #e0b34d;
+  --color-warning-soft: #3a2f13;
 
   --color-success: #4fae7c;
   --color-success-soft: #1c3324;

@@ -14,6 +14,8 @@
     transactionFromRaw,
     stepFromRaw,
     transactionDetailFromRaw,
+    historyEntryFromRaw,
+    orderRequestFromRaw,
     type Transaction,
     type Item,
     type Repair,
@@ -26,6 +28,9 @@
     type TransactionDetailItem,
     type TransactionDetailRepair,
     type TransactionDetail,
+    type OrderRequest,
+    type NewOrderRequest,
+    type HistoryEntry,
   } from "$lib/api";
   import { appState } from "$lib/state.svelte";
   import Picker from "$lib/Picker.svelte";
@@ -44,6 +49,7 @@
   import Plus from "$lib/icons/Plus.svelte";
   import Info from "$lib/icons/Info.svelte";
   import X from "$lib/icons/X.svelte";
+  import Clock from "$lib/icons/Clock.svelte";
 
   const { params } = $props();
 
@@ -71,6 +77,7 @@
       logs.push(aggregate.join("\n"));
       aggregate = [];
     }
+    loadHistory();
   }
 
   // TODO: can lazy load this
@@ -202,13 +209,19 @@
   const cannotAdvanceReasons = $derived.by<string[]>(() => {
     const reasons = [];
     if (!repairs.every((repair) => repair.completed)) {
-      reasons.push("Repairs not completed");
+      const plural = repairs.length > 1 ? "Repairs" : "Repair";
+      reasons.push(`${plural} not completed`);
     }
     if (transaction !== undefined && transaction.isWaitingOnEmail) {
       reasons.push("Waiting on email");
     }
     if (!steps.every((step) => step.completed)) {
-      reasons.push("Steps not completed");
+      const plural = steps.length > 1 ? "Steps" : "Step";
+      reasons.push(`${plural} not completed`);
+    }
+    if (orders.length > 0) {
+      const plural = orders.length > 1 ? "Order requests" : "Order request";
+      reasons.push(`${plural} not processed`);
     }
     return reasons;
   });
@@ -305,6 +318,14 @@
     logEntry = "";
   }
 
+  let history = $state<HistoryEntry[]>([]);
+  async function loadHistory() {
+    const rawHistory: any[] = await rbFetch(
+      `/transactionLogs/${transaction.num}`,
+    );
+    history = rawHistory.map(historyEntryFromRaw);
+  }
+
   async function deleteTransaction() {
     await rbFetch(`/transactions/${params.id}`, { method: "DELETE" });
     replace("/");
@@ -350,6 +371,44 @@
         completed: !detail.completed,
       }),
     });
+  }
+
+  let orders = $state<OrderRequest[]>([]);
+  $effect(() => {
+    loadOrders();
+  });
+  async function loadOrders() {
+    const rawOrders: any[] = await rbFetch(`/orderRequests/${params.id}`);
+    orders = rawOrders.map(orderRequestFromRaw);
+    orders.sort((a, b) => a.dateCreated.getTime() - b.dateCreated.getTime());
+  }
+
+  async function requestPart(i: number, detail: TransactionDetailItem) {
+    items.splice(i, 1);
+    deleteTransactionDetail(i, detail);
+    const rawOrder = await rbFetch("/orderRequests", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        created_by: appState.user!.id,
+        notes: "",
+        quantity: 1,
+        transaction_id: params.id,
+        item_id: detail.item.id,
+      }),
+    });
+    orders.push(orderRequestFromRaw(rawOrder));
+    orders.sort((a, b) => a.dateCreated.getTime() - b.dateCreated.getTime());
+  }
+  async function deleteOrder(i: number, order: OrderRequest) {
+    orders.splice(i, 1);
+    await rbFetch(`/orderRequests/${order.id}`, { method: "DELETE" });
+  }
+  async function finishOrder(i: number, order: OrderRequest) {
+    deleteOrder(i, order);
+    onItemPicked(order.item);
   }
 
   async function onItemPicked(item: Item) {
@@ -629,6 +688,12 @@
       </li>
     {/if}
   </ul>
+  <button
+    style="margin-top: var(--space-3)"
+    class="primary"
+    command="show-modal"
+    commandfor="history-dialog">History</button
+  >
   <div class="field-row" style="margin-top: var(--space-3)">
     <span class="muted">Tags</span>
     <ul class="tag-list">
@@ -670,6 +735,24 @@
       </div>
     {/if}
   </div>
+  <dialog id="history-dialog" style="height: 30rem;">
+    <div style="display: flex; flex-direction: column; height: 100%">
+      <div class="dialog-header" style="flex-shrink: 0;">
+        <h2>History</h2>
+        <button
+          class="icon-btn dialog-close"
+          command="close"
+          commandfor="history-dialog"
+          aria-label="Close"><X /></button
+        >
+      </div>
+      <ol class="log-list" style="flex: 1; min-height: 0; overflow-y: scroll">
+        {#each history as entry}
+          <li class="log-entry">{entry.description}</li>
+        {/each}
+      </ol>
+    </div>
+  </dialog>
   {#if transaction.customer === null}
     <button
       class="primary"
@@ -795,6 +878,11 @@
                 >
                 <span class="entry-actions">
                   <button
+                    class="icon-btn"
+                    aria-label="Request part"
+                    onclick={() => requestPart(i, detail)}><Clock /></button
+                  >
+                  <button
                     class="icon-btn danger"
                     aria-label="Delete part"
                     onclick={() => deleteTransactionDetail(i, detail)}
@@ -806,6 +894,40 @@
           </ul>
         {:else}
           <p class="muted">No parts added</p>
+        {/if}
+        {#if orders.length > 0}
+          <div style="margin-top: var(--space-3)" class="column-header">
+            <h3>Orders</h3>
+          </div>
+          <ul class="entry-list">
+            {#each orders as order, i (order.id)}
+              <li
+                style={"width: 100%;" +
+                  (!order.ordered
+                    ? "background: var(--color-warning-soft); border: 1px solid var(--color-warning)"
+                    : "")}
+                class="entry-row"
+              >
+                <span style="text-wrap: wrap" class="entry-label"
+                  >{order.item.name} &mdash; ${order.item.standardPrice}</span
+                >
+                <span class="entry-actions">
+                  {#if order.ordered}
+                    <button
+                      class="icon-btn success"
+                      aria-label="Finish order request"
+                      onclick={() => finishOrder(i, order)}><Check /></button
+                    >
+                  {/if}
+                  <button
+                    class="icon-btn danger"
+                    aria-label="Delete order"
+                    onclick={() => deleteOrder(i, order)}><Trash /></button
+                  >
+                </span>
+              </li>
+            {/each}
+          </ul>
         {/if}
         <button
           class="primary"

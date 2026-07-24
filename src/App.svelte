@@ -2,6 +2,7 @@
   import Router from "svelte-spa-router";
   import Home from "./pages/Home.svelte";
   import Settings from "./pages/Settings.svelte";
+  import Orders from "./pages/Orders.svelte";
   import TransactionPage from "./pages/TransactionPage.svelte";
   import AuthPrompt from "$lib/AuthPrompt.svelte";
   import { appState } from "$lib/state.svelte";
@@ -13,6 +14,7 @@
   const routes = {
     "/": Home,
     "/settings": Settings,
+    "/orders": Orders,
     "/transaction/:id": TransactionPage,
   };
 </script>
@@ -21,6 +23,7 @@
 <header class="app-header">
   <a href="#/">Home</a>
   <a href="#/settings">Settings</a>
+  <a href="#/orders">Orders</a>
   <span class="spacer"></span>
   {#if appState.user}
     <span class="user-info"
