@@ -13,7 +13,7 @@
   }
 
   const groupsUnordered = $derived.by(() => {
-    const byItemId = new Map<string, OrderGroup>();
+    const byItemId = new Map<string, OrderRequest[]>();
     for (const order of orders) {
       if (order.ordered) {
         continue;
@@ -29,7 +29,7 @@
     return byItemId;
   });
   const groupsOrdered = $derived.by(() => {
-    const byItemId = new Map<string, OrderGroup>();
+    const byItemId = new Map<string, OrderRequest[]>();
     for (const order of orders) {
       if (!order.ordered) {
         continue;
@@ -66,7 +66,7 @@
     }
     other.get(itemId)!.push(order);
     other
-      .get(itemId)
+      .get(itemId)!
       .sort((a, b) => a.dateCreated.getTime() - b.dateCreated.getTime());
     const r = await rbFetch(`/orderRequests/${order.id}`, {
       method: "PATCH",

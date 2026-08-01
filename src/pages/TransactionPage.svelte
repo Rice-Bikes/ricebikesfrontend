@@ -200,7 +200,7 @@
         0,
       ) +
       repairGroups.reduce(
-        (acc, group) => acc + (tuneUpPrice(group.tuneUpId) ?? 0),
+        (acc, group) => acc + (tuneUpPrice(group.tuneUpId!) ?? 0),
         0,
       )
     );
@@ -321,7 +321,7 @@
   let history = $state<HistoryEntry[]>([]);
   async function loadHistory() {
     const rawHistory: any[] = await rbFetch(
-      `/transactionLogs/${transaction.num}`,
+      `/transactionLogs/${transaction!.num}`,
     );
     history = rawHistory.map(historyEntryFromRaw);
   }

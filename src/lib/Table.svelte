@@ -9,7 +9,7 @@
     width?: string;
   }
   interface Props {
-    page: number;
+    page?: number;
     data: T[];
     columns: Column[];
     key: (row: T) => any;

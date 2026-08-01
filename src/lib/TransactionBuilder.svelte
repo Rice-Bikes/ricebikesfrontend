@@ -83,7 +83,7 @@
       bike,
       stepBundle: bundles.find((b) => b.id === stepBundleId) ?? null,
       tuneUp: tuneups.find((t) => t.id == tuneUpId) ?? null,
-      quantity: transactionType === "retrospec" ? parseInt(quantity) : 1,
+      quantity: transactionType === "retrospec" ? quantity : 1,
     };
   });
 
@@ -131,7 +131,7 @@
     <div
       style="border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: var(--space-2) var(--space-3)"
     >
-      <CustomerSelector popover bind:customer {customers} />
+      <CustomerSelector popover={true} bind:customer {customers} />
     </div>
   {:else}
     <div>

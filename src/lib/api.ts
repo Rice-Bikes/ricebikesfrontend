@@ -145,18 +145,7 @@ export interface OrderRequest {
   dateCreated: Date;
   item: Item;
   transaction: Transaction;
-  quantitiy: number;
-}
-
-export interface OrderRequest {
-  id: string;
-  createdBy: User;
-  ordered: boolean;
-  notes: string;
-  dateCreated: Date;
-  item: Item;
-  transaction: Transaction;
-  quantitiy: number;
+  quantity: number;
 }
 
 export interface NewOrderRequest {
@@ -505,8 +494,8 @@ export function rawFromOrderRequest(orderRequest: Partial<OrderRequest>): any {
   if (orderRequest.notes !== undefined) raw.notes = orderRequest.notes;
   if (orderRequest.dateCreated !== undefined)
     raw.date_created = orderRequest.dateCreated.toISOString();
-  if (orderRequest.transactionId !== undefined)
-    raw.transaction_id = orderRequest.transactionId;
+  if (orderRequest.transaction !== undefined)
+    raw.transaction_id = orderRequest.transaction.id;
   if (orderRequest.quantity !== undefined) raw.quantity = orderRequest.quantity;
   if (orderRequest.item !== undefined) raw.item_id = orderRequest.item.id;
   return raw;

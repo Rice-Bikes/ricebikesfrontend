@@ -92,6 +92,6 @@
     render={repairRender}
     callback={onRepairPicked}
     placeholder="Enter repair"
-    popover
+    popover={true}
   />
 </div>

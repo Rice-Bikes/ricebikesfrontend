@@ -109,7 +109,7 @@
     repairs = rawRepairs.map(repairFromRaw);
   }
 
-  let employees = $state<User>([]);
+  let employees = $state<User[]>([]);
   $effect(() => {
     loadEmployees();
   });
@@ -206,13 +206,13 @@
   </form>
 </section>
 <section>
-  {#snippet employeeNetID(employee)}
+  {#snippet employeeNetID(employee: User)}
     {employee.netID}
   {/snippet}
-  {#snippet employeeName(employee)}
+  {#snippet employeeName(employee: User)}
     {employee.firstName} {employee.lastName}
   {/snippet}
-  {#snippet employeeActive(employee)}
+  {#snippet employeeActive(employee: User)}
     {#if employee.active}
       Active
     {:else}
