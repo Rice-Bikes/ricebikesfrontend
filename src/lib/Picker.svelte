@@ -135,6 +135,8 @@
             onclick={(e) => {
               e.preventDefault();
               onSelected(row);
+              searchInput = "";
+              debouncedSearchInput = "";
             }}
           >
             {@render render(row)}

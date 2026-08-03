@@ -312,10 +312,10 @@
     }
     const lineEntry = `${logEntry} - ${appState.user!.firstName} ${appState.user!.lastName}`;
     logs.push(lineEntry);
+    logEntry = "";
     await updateTransaction({
       description: logs.join("\n"),
     });
-    logEntry = "";
   }
 
   let history = $state<HistoryEntry[]>([]);
