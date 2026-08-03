@@ -368,7 +368,7 @@
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        completed: !detail.completed,
+        completed: repairs[i].completed,
       }),
     });
   }
