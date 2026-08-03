@@ -25,7 +25,7 @@
   import EmailIcon from "$lib/icons/Email.svelte";
   import { push, replace, router } from "svelte-spa-router";
 
-  let view = $state<"main" | "beerBikes" | "builds">("main");
+  let view = $state<"main" | "beerBikes" | "builds" | "employee">("main");
   const viewFilter: (transaction: Transaction) => boolean = $derived.by(() => {
     switch (view) {
       case "main":
@@ -41,6 +41,10 @@
             transaction?.isRefurb === true &&
             !transaction?.isCompleted &&
             !transaction?.isWaitingOnEmail);
+      case "employee":
+        return (transaction) =>
+          transaction?.isCompleted === false &&
+          transaction?.isEmployee === true;
       case "beerBikes":
         return (x) =>
           x.isCompleted === false &&
@@ -197,6 +201,7 @@
       <option value="main">Main</option>
       <option value="builds">Builds</option>
       <option value="beerBikes">Beer bikes</option>
+      <option value="employee">Employee</option>
     </select>
     <button
       class="primary"
