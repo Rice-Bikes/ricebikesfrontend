@@ -77,6 +77,7 @@ export interface User {
   lastName: string;
   active: boolean;
 }
+export type NewUser = Omit<User, "id" | "active">;
 
 export interface Step {
   id: string;

@@ -7,6 +7,7 @@
     userFromRaw,
     rawFromStepBundle,
     rawFromTuneUp,
+    rawFromUser,
     type StepBundle,
     type NewStepBundle,
     type TuneUp,
@@ -17,9 +18,12 @@
   import EditInput from "$lib/EditInput.svelte";
   import StepList from "$lib/StepList.svelte";
   import TuneUpList from "$lib/TuneUpList.svelte";
+  import EmployeeBuilder from "$lib/EmployeeBuilder.svelte";
   import Table from "$lib/Table.svelte";
   import Trash from "$lib/icons/Trash.svelte";
   import ArrowRight from "$lib/icons/ArrowRight.svelte";
+  import Plus from "$lib/icons/Plus.svelte";
+  import X from "$lib/icons/X.svelte";
 
   let stepBundles = $state<StepBundle[]>([]);
   $effect(() => {
@@ -117,6 +121,34 @@
     const rawEmployees: any[] = await rbFetch("/users");
     employees = rawEmployees.map(userFromRaw);
   }
+
+  let employeeBuilderKey = $state(0);
+  async function onEmployeeBuilt(employee: NewUser) {
+    const dialog = document.getElementById(
+      "employee-dialog",
+    ) as HTMLDialogElement;
+    dialog.close();
+    const rawUser = await rbFetch("/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(rawFromUser(employee)),
+    });
+    employees.push(userFromRaw(rawUser));
+  }
+
+  async function setActive(employee: User, active: boolean) {
+    await rbFetch(`/users/${employee.id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        active,
+      }),
+    });
+  }
 </script>
 
 <h1>Settings</h1>
@@ -213,13 +245,39 @@
     {employee.firstName} {employee.lastName}
   {/snippet}
   {#snippet employeeActive(employee: User)}
-    {#if employee.active}
-      Active
-    {:else}
-      Not active
-    {/if}
+    <input
+      type="checkbox"
+      id={`${employee.id}-active`}
+      onchange={(event) => setActive(employee, event.currentTarget.checked)}
+      bind:checked={employee.active}
+    />
   {/snippet}
   <h2>Employees</h2>
+  <button
+    class="primary"
+    onclick={() => employeeBuilderKey++}
+    style="margin-bottom: var(--space-4)"
+    command="show-modal"
+    commandfor="employee-dialog"><Plus /> New</button
+  >
+  <dialog id="employee-dialog" style="height: 25rem">
+    <div style="display: flex; flex-direction: column; height: 100%">
+      <div class="dialog-header">
+        <h2>New Employee</h2>
+        <button
+          class="icon-btn dialog-close"
+          command="close"
+          commandfor="employee-dialog"
+          aria-label="Close"><X /></button
+        >
+      </div>
+      <div style="flex: 1">
+        {#key employeeBuilderKey}
+          <EmployeeBuilder {employees} callback={onEmployeeBuilt} />
+        {/key}
+      </div>
+    </div>
+  </dialog>
   <Table
     data={employees}
     pageLimit={20}
@@ -236,7 +294,7 @@
     columns={[
       { name: "netID", render: employeeNetID, width: "8rem" },
       { name: "Name", render: employeeName, width: "auto" },
-      { name: "Status", render: employeeActive, width: "auto" },
+      { name: "Active", render: employeeActive, width: "auto" },
     ]}
   />
 </section>
