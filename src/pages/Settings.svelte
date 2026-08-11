@@ -14,6 +14,7 @@
     type NewTuneUp,
     type Repair,
     type User,
+    type NewUser,
   } from "$lib/api";
   import EditInput from "$lib/EditInput.svelte";
   import StepList from "$lib/StepList.svelte";
@@ -273,7 +274,7 @@
       </div>
       <div style="flex: 1">
         {#key employeeBuilderKey}
-          <EmployeeBuilder {employees} callback={onEmployeeBuilt} />
+          <EmployeeBuilder callback={onEmployeeBuilt} />
         {/key}
       </div>
     </div>

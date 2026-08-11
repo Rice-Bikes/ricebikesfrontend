@@ -386,6 +386,18 @@
   async function requestPart(i: number, detail: TransactionDetailItem) {
     items.splice(i, 1);
     deleteTransactionDetail(i, detail);
+    const orderIdx = orders.length;
+    orders.push({
+      id: `TEMP-${orderIdx}`,
+      createdBy: appState.user!,
+      ordered: false,
+      notes: "",
+      dateCreated: new Date(),
+      item: detail.item,
+      transaction: transaction!,
+      quantity: 1,
+    });
+    orders.sort((a, b) => a.dateCreated.getTime() - b.dateCreated.getTime());
     const rawOrder = await rbFetch("/orderRequests", {
       method: "POST",
       headers: {
@@ -399,8 +411,8 @@
         item_id: detail.item.id,
       }),
     });
-    orders.push(orderRequestFromRaw(rawOrder));
-    orders.sort((a, b) => a.dateCreated.getTime() - b.dateCreated.getTime());
+    const idx = orders.findIndex((o) => o.id == `TEMP-${orderIdx}`)!;
+    orders[idx] = orderRequestFromRaw(rawOrder);
   }
   async function deleteOrder(i: number, order: OrderRequest) {
     orders.splice(i, 1);
@@ -414,6 +426,13 @@
   async function onItemPicked(item: Item) {
     const dialog = document.getElementById("item-dialog") as HTMLDialogElement;
     dialog.close();
+    const detailIdx = repairs.length;
+    items.push({
+      kind: "item",
+      id: `TEMP-${detailIdx}`,
+      item,
+    });
+    items.sort((a, b) => a.item.name.localeCompare(b.item.name));
     const rawDetail: any = await rbFetch(`/transactionDetails/${params.id}`, {
       method: "POST",
       headers: {
@@ -426,8 +445,8 @@
         quantity: 1,
       }),
     });
-    items.push(transactionDetailFromRaw(rawDetail) as TransactionDetailItem);
-    items.sort((a, b) => a.item.name.localeCompare(b.item.name));
+    const idx = items.findIndex((i) => i.id == `TEMP-${detailIdx}`)!;
+    items[idx] = transactionDetailFromRaw(rawDetail) as TransactionDetailItem;
   }
 
   async function onRepairPicked(repair: Repair) {
@@ -435,6 +454,15 @@
       "repair-dialog",
     ) as HTMLDialogElement;
     dialog.close();
+    const detailIdx = repairs.length;
+    repairs.push({
+      kind: "repair",
+      id: `TEMP-${detailIdx}`,
+      completed: false,
+      tuneUpId: null,
+      repair,
+    });
+    repairs.sort((a, b) => a.repair.name.localeCompare(b.repair.name));
     const rawDetail: any = await rbFetch(`/transactionDetails/${params.id}`, {
       method: "POST",
       headers: {
@@ -447,10 +475,10 @@
         quantity: 1,
       }),
     });
-    repairs.push(
-      transactionDetailFromRaw(rawDetail) as TransactionDetailRepair,
-    );
-    repairs.sort((a, b) => a.repair.name.localeCompare(b.repair.name));
+    const idx = repairs.findIndex((r) => r.id == `TEMP-${detailIdx}`)!;
+    repairs[idx] = transactionDetailFromRaw(
+      rawDetail,
+    ) as TransactionDetailRepair;
   }
 
   async function onItemBuilt(item: NewItem) {

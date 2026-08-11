@@ -57,6 +57,12 @@
       order: maxStepOrder + STEP_ORDER_SIZE,
     };
     newStep = "";
+    const newIdx = steps.length;
+    steps.push({
+      id: `TEMP-${newIdx}`,
+      completed: false,
+      ...stepData,
+    });
     const rawStep = await rbFetch("/steps", {
       method: "POST",
       headers: {
@@ -64,7 +70,7 @@
       },
       body: JSON.stringify(rawFromStep(stepData)),
     });
-    steps.push(stepFromRaw(rawStep));
+    steps[newIdx] = stepFromRaw(rawStep);
   }
   async function toggleStepCompleted(step: Step, i: number) {
     steps[i].completed = !steps[i].completed;
