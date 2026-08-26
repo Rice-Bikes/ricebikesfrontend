@@ -36,16 +36,17 @@
   });
 
   async function submit() {
+    const lower = netID.toLowerCase();
     try {
-      const rawUser: any = await rbFetch(`/users/${netID}`);
+      const rawUser: any = await rbFetch(`/users/${lower}`);
       if (!rawUser.active) {
-        showError(`"${netID}" is no longer an active user!`);
+        showError(`"${lower}" is no longer an active user!`);
         return;
       }
       appState.user = userFromRaw(rawUser);
     } catch (err) {
       if (err instanceof RbError && err.status === 404) {
-        showError(`"${netID}" is not a registered netID yet!`);
+        showError(`"${lower}" is not a registered lower yet!`);
         return;
       } else {
         throw err;
