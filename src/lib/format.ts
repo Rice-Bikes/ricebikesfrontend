@@ -30,4 +30,5 @@ export function formatDateAgo(date: Date): string {
       return formatter.format(Math.round(delta), rangeType);
     }
   }
+  return date.toDateString();
 }
