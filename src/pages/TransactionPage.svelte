@@ -982,7 +982,7 @@
               <Picker
                 data={allItems}
                 key={(item) => item.id}
-                searchKeys={["name"]}
+                searchKeys={["name", "upc"]}
                 render={itemRender}
                 callback={onItemPicked}
                 placeholder="Search parts"
