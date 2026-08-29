@@ -13,7 +13,7 @@
     type StepBundle,
     type TuneUp,
   } from "$lib/api";
-  import { titleCase } from "$lib/format";
+  import { formatDateAgo, titleCase } from "$lib/format";
   import Table from "$lib/Table.svelte";
   import TransactionBuilder from "$lib/TransactionBuilder.svelte";
   import Plus from "$lib/icons/Plus.svelte";
@@ -166,7 +166,7 @@
   <span>{titleCase(transaction.transactionType)}</span>
 {/snippet}
 {#snippet transactionCreated(transaction: Transaction)}
-  <date>{transaction.dateCreated.toDateString()}</date>
+  <span>{formatDateAgo(transaction.dateCreated)}</span>
 {/snippet}
 {#snippet transactionBike(transaction: Transaction)}
   <span>{transaction.bike?.make} {transaction.bike?.model}</span>
