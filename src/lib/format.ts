@@ -32,3 +32,12 @@ export function formatDateAgo(date: Date): string {
   }
   return date.toDateString();
 }
+
+export function formatDollars(amount: number): string {
+  return amount.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}

@@ -40,7 +40,7 @@
   import StepList from "$lib/StepList.svelte";
   import CustomerSelector from "$lib/CustomerSelector.svelte";
   import { replace } from "svelte-spa-router";
-  import { formatPhoneNumber, titleCase } from "$lib/format";
+  import { formatDollars, formatPhoneNumber, titleCase } from "$lib/format";
   import Trash from "$lib/icons/Trash.svelte";
   import Check from "$lib/icons/Check.svelte";
   import ArrowRight from "$lib/icons/ArrowRight.svelte";
@@ -191,6 +191,9 @@
     return l;
   });
 
+  // Harris county tax
+  // TODO: should be configurable via settings
+  const TAX = 0.0675;
   const totalPrice = $derived.by(() => {
     return (
       items.reduce((acc, detail) => acc + detail.item.standardPrice, 0) +
@@ -204,6 +207,9 @@
         0,
       )
     );
+  });
+  const totalPriceWithTax = $derived.by(() => {
+    return totalPrice + totalPrice * TAX;
   });
 
   const cannotAdvanceReasons = $derived.by<string[]>(() => {
@@ -1214,8 +1220,11 @@
         </dialog>
       </div>
     </div>
-    <p style="margin-top: var(--space-4); font-weight: 600">
-      Total: ${totalPrice}
+    <p style="margin-top: var(--space-4)">
+      <span style="font-weight: 600"
+        >Total: {formatDollars(totalPriceWithTax)}</span
+      >
+      (Raw: {formatDollars(totalPrice)})
     </p>
   </section>
   <section>
