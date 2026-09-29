@@ -658,6 +658,45 @@
       body: JSON.stringify(rawFromCustomer(body)),
     });
   }
+
+  async function generateReceipt() {
+    const receipt = [];
+    if (items.length > 0) {
+      receipt.push("ITEMS:");
+      for (const transactionDetail of items) {
+        receipt.push(
+          `* ${transactionDetail.item.name} - ${formatDollars(transactionDetail.item.standardPrice)}`,
+        );
+      }
+    }
+    if (repairs.length > 0) {
+      receipt.push("\nREPAIRS:");
+      for (const transactionDetail of repairs) {
+        if (transactionDetail.tuneUpId !== null) {
+          continue;
+        }
+        receipt.push(
+          `* ${transactionDetail.repair} - ${formatDollars(transactionDetail.repair.price)}`,
+        );
+      }
+    }
+    if (repairGroups.length > 0) {
+      receipt.push("\nTUNE UPS:");
+      for (const repairGroup of repairGroups) {
+        if (repairGroup.tuneUpId === null) {
+          continue;
+        }
+        receipt.push(
+          `* ${tuneUpName(repairGroup.tuneUpId)} - ${tuneUpPrice(repairGroup.tuneUpId)}`,
+        );
+      }
+    }
+    receipt.push(`\nRAW: ${formatDollars(totalPrice)}`);
+    receipt.push(`TAX: ${formatDollars(totalPrice * TAX)}`);
+    receipt.push(`TOTAL: ${formatDollars(totalPriceWithTax)}`);
+    await navigator.clipboard.writeText(receipt.join("\n"));
+    // TODO: make changes to the generate receipt button
+  }
 </script>
 
 {#if transaction === undefined}
@@ -1234,7 +1273,10 @@
     </section>
   {/if}
   <section>
-    <h2>Stage</h2>
+    <h2>Checkout</h2>
+    <button class="primary" onclick={() => generateReceipt()}
+      >Generate Receipt</button
+    >
     <div class="stage-control">
       <button
         class="icon-btn"
