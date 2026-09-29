@@ -1227,10 +1227,12 @@
       (Raw: {formatDollars(totalPrice)})
     </p>
   </section>
-  <section>
-    <h2>Steps</h2>
-    <StepList bind:steps transaction={params.id} />
-  </section>
+  {#if transaction.transactionType === "retrospec"}
+    <section>
+      <h2>Steps</h2>
+      <StepList bind:steps transaction={params.id} />
+    </section>
+  {/if}
   <section>
     <h2>Stage</h2>
     <div class="stage-control">

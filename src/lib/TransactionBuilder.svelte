@@ -150,7 +150,7 @@
       <input bind:value={quantity} min="1" step="1" type="number" />
     </div>
   {/if}
-  {#if bundles.length > 0}
+  {#if transactionType === "retrospec" && bundles.length > 0}
     <div>
       <label for="step-bundle-select">Step bundle:</label>
       <select id="step-bundle-select" bind:value={stepBundleId}>
