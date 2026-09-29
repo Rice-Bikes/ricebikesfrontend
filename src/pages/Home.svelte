@@ -25,7 +25,9 @@
   import EmailIcon from "$lib/icons/Email.svelte";
   import { push, replace, router } from "svelte-spa-router";
 
-  let view = $state<"main" | "beerBikes" | "builds" | "employee">("main");
+  let view = $state<"main" | "beerBikes" | "builds" | "employee" | "waiting">(
+    "main",
+  );
   const viewFilter: (transaction: Transaction) => boolean = $derived.by(() => {
     switch (view) {
       case "main":
@@ -57,6 +59,8 @@
           x.isCompleted === false &&
           x.transactionType === "retrospec" &&
           x.dateCompleted === null;
+      case "waiting":
+        return (x) => x.isCompleted === true;
     }
   });
 
@@ -64,6 +68,8 @@
     const params = new URLSearchParams({
       page_limit: "1000",
       aggregate: "true",
+      is_completed: view === "waiting" ? "true" : "false",
+      is_paid: "false",
     });
     const transactions: any[] = await rbFetch(`/transactions?${params}`);
     return transactions.map(transactionFromRaw);
@@ -202,6 +208,7 @@
       <option value="builds">Builds</option>
       <option value="beerBikes">Beer bikes</option>
       <option value="employee">Employee</option>
+      <option value="waiting">Waiting on Pickup</option>
     </select>
     <button
       class="primary"

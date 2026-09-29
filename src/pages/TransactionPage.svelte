@@ -231,16 +231,16 @@
     }
     return reasons;
   });
-  const canAdvance = $derived(cannotAdvanceReasons.length == 0);
+  const canComplete = $derived(cannotAdvanceReasons.length == 0);
   // Make sure we can never have a stage mismatch, where we have uncompleted repairs yet the
   // transaction is marked as completed.
   $effect(() => {
     if (
-      !canAdvance &&
+      !canComplete &&
       transaction !== undefined &&
       (transaction.isPaid || transaction.isCompleted)
     ) {
-      resetStage();
+      resetCompletion();
     }
   });
 
@@ -605,30 +605,22 @@
     }
   }
 
-  async function advanceStage() {
+  async function toggleComplete() {
     if (!transaction!.isCompleted) {
-      await updateTransaction({ isCompleted: true });
+      // TODO: bring up popup asking if should send email
+    } else if (transaction!.isPaid) {
+      await resetCompletion();
       return;
     }
-    if (!transaction!.isPaid) {
-      await updateTransaction({ isPaid: true });
-      return;
-    }
+    await updateTransaction({ isCompleted: !transaction!.isCompleted });
   }
 
-  async function deadvanceStage() {
-    if (transaction!.isPaid) {
-      await updateTransaction({ isPaid: false });
-      return;
-    }
-    if (transaction!.isCompleted) {
-      await updateTransaction({ isCompleted: false });
-      return;
-    }
+  async function toggleCheckout() {
+    await updateTransaction({ isPaid: !transaction!.isPaid });
   }
 
-  async function resetStage() {
-    await updateTransaction({ isPaid: false, isCompleted: false });
+  async function resetCompletion() {
+    await updateTransaction({ isCompleted: false, isPaid: false })
   }
 
   async function updateBike(body: Partial<Bike>) {
@@ -1274,44 +1266,37 @@
   {/if}
   <section>
     <h2>Checkout</h2>
-    <button class="primary" onclick={() => generateReceipt()}
-      >Generate Receipt</button
-    >
-    <div class="stage-control">
-      <button
-        class="icon-btn"
-        aria-label="Move to previous stage"
-        disabled={!transaction.isCompleted}
-        onclick={() => deadvanceStage()}
-      >
-        <ChevronLeft />
-      </button>
-      <span class="stage-label">
-        {#if transaction.isCompleted}
-          {#if transaction.isPaid}
-            Paid
-          {:else}
-            Complete
-          {/if}
-        {:else}
-          Not completed
-        {/if}
-      </span>
-      <button
-        class="icon-btn"
-        aria-label="Advance stage"
-        onclick={() => advanceStage()}
-        disabled={!canAdvance || transaction.isPaid}
-      >
-        <ChevronRight />
-      </button>
-    </div>
-    {#if !canAdvance}
+    {#if !canComplete}
       <ul style="margin-top: var(--space-2)">
         {#each cannotAdvanceReasons as reason}
           <li class="faint">{reason}</li>
         {/each}
       </ul>
     {/if}
+    <div style="margin-top: var(--space-3)">
+      <button
+        disabled={!canComplete}
+        class="primary"
+        onclick={() => toggleComplete()}
+        >{#if transaction.isCompleted}
+          Uncomplete
+        {:else}
+          Complete
+        {/if}</button
+      >
+      <button
+        disabled={!transaction.isCompleted}
+        class="primary"
+        onclick={() => toggleCheckout()}
+        >{#if transaction.isPaid}
+          Uncheckout
+        {:else}
+          Checkout
+        {/if}</button
+      >
+      <button class="primary" onclick={() => generateReceipt()}
+        >Generate Receipt</button
+      >
+    </div>
   </section>
 {/if}
