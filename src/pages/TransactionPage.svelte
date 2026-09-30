@@ -620,7 +620,7 @@
   }
 
   async function resetCompletion() {
-    await updateTransaction({ isCompleted: false, isPaid: false })
+    await updateTransaction({ isCompleted: false, isPaid: false });
   }
 
   async function updateBike(body: Partial<Bike>) {
