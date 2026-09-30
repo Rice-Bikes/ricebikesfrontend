@@ -194,6 +194,9 @@
     {#if transaction.isWaitingOnEmail}
       <li><EmailIcon /></li>
     {/if}
+    {#if transaction.isRefurb}
+      <li>R</li>
+    {/if}
   </ul>
 {/snippet}
 

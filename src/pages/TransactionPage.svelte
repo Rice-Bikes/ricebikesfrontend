@@ -169,8 +169,8 @@
     );
   }
 
-  type TransactionTag = "beerBike" | "urgent" | "nuclear" | "email";
-  const MAX_TAGS_LEN = 4;
+  type TransactionTag = "beerBike" | "urgent" | "nuclear" | "email" | "refurb";
+  const MAX_TAGS_LEN = 5;
   const tags = $derived.by<TransactionTag[]>(() => {
     if (transaction === undefined) {
       return [];
@@ -187,6 +187,9 @@
     }
     if (transaction.isWaitingOnEmail) {
       l.push("email");
+    }
+    if (transaction.isRefurb) {
+      l.push("refurb");
     }
     return l;
   });
@@ -581,6 +584,9 @@
       case "email":
         await updateTransaction({ isWaitingOnEmail: on });
         break;
+      case "refurb":
+        await updateTransaction({ isRefurb: on });
+        break;
     }
   }
 
@@ -602,6 +608,8 @@
         return "Nuclear";
       case "email":
         return "Waiting on email";
+      case "refurb":
+        return "Refurb";
     }
   }
 
@@ -787,7 +795,7 @@
         style="position-anchor: --tags-anchor"
       >
         <ul style="height: inherit" class="picker-list">
-          {#each ["urgent", "beerBike", "nuclear", "email"] as tag}
+          {#each ["urgent", "beerBike", "nuclear", "email", "refurb"] as tag}
             {#if !tags.includes(tag as TransactionTag)}
               <li>
                 <button onclick={() => addTag(tag as TransactionTag)}
