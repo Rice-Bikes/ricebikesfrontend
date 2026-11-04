@@ -132,7 +132,8 @@ export type TransactionDetail = TransactionDetailItem | TransactionDetailRepair;
 export interface HistoryEntry {
   id: string;
   transactionNum: number;
-  changedBy: User;
+  // Null when the log's user row has gone away
+  changedBy: User | null;
   description: string;
   changeType: string;
   date: Date;
@@ -343,9 +344,9 @@ export function userFromRaw(raw: any): User {
 export function rawFromUser(user: Partial<User>): any {
   const raw: any = {};
   if (user.id !== undefined) raw.user_id = user.id;
-  if (user.netID !== undefined) raw.net_id = user.netID;
-  if (user.firstName !== undefined) raw.first_name = user.firstName;
-  if (user.lastName !== undefined) raw.last_name = user.lastName;
+  if (user.netID !== undefined) raw.username = user.netID;
+  if (user.firstName !== undefined) raw.firstname = user.firstName;
+  if (user.lastName !== undefined) raw.lastname = user.lastName;
   if (user.active !== undefined) raw.active = user.active;
   return raw;
 }
@@ -454,10 +455,10 @@ export function historyEntryFromRaw(raw: any): HistoryEntry {
   return {
     id: raw.log_id,
     transactionNum: raw.transaction_num,
-    changedBy: userFromRaw(raw.Users),
+    changedBy: raw.Users ? userFromRaw(raw.Users) : null,
     description: raw.description,
     changeType: raw.change_type,
-    date: new Date(raw.dateModified),
+    date: new Date(raw.date_modified),
   };
 }
 
@@ -466,10 +467,11 @@ export function rawFromHistoryEntry(entry: Partial<HistoryEntry>): any {
   if (entry.id !== undefined) raw.log_id = entry.id;
   if (entry.transactionNum !== undefined)
     raw.transaction_num = entry.transactionNum;
-  if (entry.changedBy !== undefined) raw.changed_by = entry.changedBy.id;
+  if (entry.changedBy !== undefined)
+    raw.changed_by = entry.changedBy?.id ?? null;
   if (entry.description !== undefined) raw.description = entry.description;
   if (entry.changeType !== undefined) raw.change_type = entry.changeType;
-  if (entry.date !== undefined) raw.date = entry.date.toISOString();
+  if (entry.date !== undefined) raw.date_modified = entry.date.toISOString();
   return raw;
 }
 

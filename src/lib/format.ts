@@ -33,6 +33,16 @@ export function formatDateAgo(date: Date): string {
   return date.toDateString();
 }
 
+export function formatDateTime(date: Date): string {
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown date";
+  }
+  return date.toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
 export function formatDollars(amount: number): string {
   return amount.toLocaleString("en-US", {
     style: "currency",

@@ -25,42 +25,41 @@
   import EmailIcon from "$lib/icons/Email.svelte";
   import { push, replace, router } from "svelte-spa-router";
 
-  let view = $state<"main" | "beerBikes" | "builds" | "employee" | "waiting">(
-    "main",
-  );
+  type View = "main" | "builds" | "refurbs" | "beerBikes" | "waiting";
+
+  let view = $state<View>("main");
+  // Employee transactions are hidden unless asked for, except on the refurbs
+  // tab, where they are the bulk of the work.
+  let showEmployees = $state(false);
+
+  function setView(newView: View) {
+    view = newView;
+    showEmployees = newView === "refurbs";
+  }
   const viewFilter: (transaction: Transaction) => boolean = $derived.by(() => {
     switch (view) {
       case "main":
         return (transaction) =>
-          (transaction?.isCompleted === false &&
-            transaction.transactionType !== null &&
-            transaction.transactionType !== "retrospec" &&
-            (transaction?.isEmployee === false ||
-              (transaction?.isEmployee === true &&
-                transaction?.isBeerBike === true)) &&
-            transaction?.isRefurb === false) ||
-          (transaction.transactionType === "retrospec" &&
-            transaction?.isRefurb === true &&
-            !transaction?.isCompleted &&
-            !transaction?.isWaitingOnEmail);
-      case "employee":
-        return (transaction) =>
           transaction?.isCompleted === false &&
-          transaction?.isEmployee === true;
+          transaction.transactionType !== null &&
+          transaction.transactionType !== "retrospec" &&
+          transaction?.isRefurb === false;
+      case "refurbs":
+        return (x) => x.isCompleted === false && x.isRefurb;
       case "beerBikes":
         return (x) =>
           x.isCompleted === false &&
           x.transactionType !== null &&
-          x.dateCompleted === null &&
           x.transactionType !== "retrospec" &&
           x.isBeerBike;
       case "builds":
         return (x) =>
-          x.isCompleted === false &&
-          x.transactionType === "retrospec" &&
-          x.dateCompleted === null;
+          x.isCompleted === false && x.transactionType === "retrospec";
       case "waiting":
-        return (x) => x.isCompleted === true;
+        return (x) =>
+          x.isCompleted === true &&
+          x.dateCompleted !== null &&
+          x.isPaid === false;
     }
   });
 
@@ -74,16 +73,72 @@
     const transactions: any[] = await rbFetch(`/transactions?${params}`);
     return transactions.map(transactionFromRaw);
   });
+  // Beer bike transactions are usually logged against employees, so they stay
+  // visible even when employee transactions are hidden.
+  const employeeFilter: (transaction: Transaction) => boolean = $derived.by(
+    () => {
+      if (showEmployees) {
+        return () => true;
+      }
+      return (transaction: Transaction) =>
+        !transaction.isEmployee || transaction.isBeerBike;
+    },
+  );
+
   const filteredTransactions: Promise<Transaction[]> = $derived.by(async () => {
     const fn = viewFilter;
+    const employeeFn = employeeFilter;
     const transactions = await transactionsPromise;
-    return transactions.filter(fn);
+    return transactions.filter((x) => fn(x) && employeeFn(x));
   });
 
   let transactionTablePage = $derived.by(() => {
     const params = new URLSearchParams(router.querystring ?? "");
     const page = params.get("page");
     return parseInt(page || "0") || 0;
+  });
+  const transactionTableColumns = $derived.by(() => {
+    const cols = [
+      {
+        name: "#",
+        render: transactionNumColumn,
+        width: "8ch",
+      },
+      {
+        name: "Tags",
+        render: transactionTagsColumn,
+        width: "5rem",
+      },
+      {
+        name: "Type",
+        render: transactionType,
+        width: "12ch",
+      },
+      {
+        name: "Customer",
+        render: transactionName,
+        width: "20ch",
+      },
+      {
+        name: "Bike",
+        render: transactionBike,
+        width: "auto",
+      },
+    ];
+    if (view === "waiting") {
+      cols.push({
+        name: "Completed",
+        render: transactionCompleted,
+        width: "auto",
+      });
+    } else {
+      cols.push({
+        name: "Created",
+        render: transactionCreated,
+        width: "auto",
+      });
+    }
+    return cols;
   });
 
   // Change URL based on Transaction table page
@@ -174,6 +229,13 @@
 {#snippet transactionCreated(transaction: Transaction)}
   <span>{formatDateAgo(transaction.dateCreated)}</span>
 {/snippet}
+{#snippet transactionCompleted(transaction: Transaction)}
+  <span
+    >{#if transaction.dateCompleted !== null}{formatDateAgo(
+        transaction.dateCompleted,
+      )}{/if}</span
+  >
+{/snippet}
 {#snippet transactionBike(transaction: Transaction)}
   <span>{transaction.bike?.make} {transaction.bike?.model}</span>
 {/snippet}
@@ -206,13 +268,20 @@
   <p class="muted">Loading...</p>
 {:then transactions: Transaction[]}
   <div class="field-row" style="margin-bottom: var(--space-4)">
-    <select bind:value={view}>
+    <select
+      value={view}
+      onchange={(event) => setView(event.currentTarget.value as View)}
+    >
       <option value="main">Main</option>
       <option value="builds">Builds</option>
+      <option value="refurbs">Refurbs</option>
       <option value="beerBikes">Beer bikes</option>
-      <option value="employee">Employee</option>
       <option value="waiting">Waiting on Pickup</option>
     </select>
+    <label class="field-row" for="show-employees">
+      <input id="show-employees" type="checkbox" bind:checked={showEmployees} />
+      Show employees
+    </label>
     <button
       class="primary"
       onclick={() => transactionBuilderKey++}
@@ -265,37 +334,6 @@
       }
       return a.dateCreated.getTime() - b.dateCreated.getTime();
     }}
-    columns={[
-      {
-        name: "#",
-        render: transactionNumColumn,
-        width: "8ch",
-      },
-      {
-        name: "Tags",
-        render: transactionTagsColumn,
-        width: "5rem",
-      },
-      {
-        name: "Type",
-        render: transactionType,
-        width: "12ch",
-      },
-      {
-        name: "Customer",
-        render: transactionName,
-        width: "20ch",
-      },
-      {
-        name: "Bike",
-        render: transactionBike,
-        width: "auto",
-      },
-      {
-        name: "Created",
-        render: transactionCreated,
-        width: "auto",
-      },
-    ]}
+    columns={transactionTableColumns}
   />
 {/await}

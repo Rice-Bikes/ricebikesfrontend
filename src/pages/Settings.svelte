@@ -134,7 +134,7 @@
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(rawFromUser(employee)),
+      body: JSON.stringify({ active: true, ...rawFromUser(employee) }),
     });
     employees.push(userFromRaw(rawUser));
   }

@@ -31,6 +31,7 @@
     type OrderRequest,
     type NewOrderRequest,
     type HistoryEntry,
+    RbError,
   } from "$lib/api";
   import { appState } from "$lib/state.svelte";
   import Picker from "$lib/Picker.svelte";
@@ -40,7 +41,13 @@
   import StepList from "$lib/StepList.svelte";
   import CustomerSelector from "$lib/CustomerSelector.svelte";
   import { replace } from "svelte-spa-router";
-  import { formatDollars, formatPhoneNumber, titleCase } from "$lib/format";
+  import {
+    formatDateAgo,
+    formatDateTime,
+    formatDollars,
+    formatPhoneNumber,
+    titleCase,
+  } from "$lib/format";
   import Trash from "$lib/icons/Trash.svelte";
   import Check from "$lib/icons/Check.svelte";
   import ArrowRight from "$lib/icons/ArrowRight.svelte";
@@ -235,6 +242,11 @@
     return reasons;
   });
   const canComplete = $derived(cannotAdvanceReasons.length == 0);
+  const canEmailCustomer = $derived(
+    transaction?.customer != null && !!transaction.customer.email,
+  );
+  // "idle", "sending", or an error message from the last send attempt
+  let emailState = $state<string>("idle");
   // Make sure we can never have a stage mismatch, where we have uncompleted repairs yet the
   // transaction is marked as completed.
   $effect(() => {
@@ -328,11 +340,37 @@
   }
 
   let history = $state<HistoryEntry[]>([]);
+  let historyError = $state<string | null>(null);
   async function loadHistory() {
-    const rawHistory: any[] = await rbFetch(
-      `/transactionLogs/${transaction!.num}`,
-    );
-    history = rawHistory.map(historyEntryFromRaw);
+    historyError = null;
+    let rawHistory: any[] | null;
+    try {
+      rawHistory = await rbFetch<any[] | null>(
+        `/transactionLogs/${transaction!.num}`,
+      );
+    } catch (err) {
+      history = [];
+      historyError =
+        err instanceof RbError ? err.message : "Could not load history";
+      return;
+    }
+    // The backend answers with an empty body when a transaction has no logs
+    history = (rawHistory ?? [])
+      .map(historyEntryFromRaw)
+      .sort((a, b) => b.date.getTime() - a.date.getTime());
+  }
+
+  // History rows come from a left join, so the user row and its name fields
+  // can all be missing.
+  function historyEntryAuthor(entry: HistoryEntry): string {
+    const user = entry.changedBy;
+    if (user === null) {
+      return "Unknown user";
+    }
+    const name = [user.firstName, user.lastName]
+      .filter((part) => part)
+      .join(" ");
+    return name || user.netID || "Unknown user";
   }
 
   async function deleteTransaction() {
@@ -393,7 +431,6 @@
   }
 
   async function requestPart(i: number, detail: TransactionDetailItem) {
-    items.splice(i, 1);
     deleteTransactionDetail(i, detail);
     const orderIdx = orders.length;
     orders.push({
@@ -614,13 +651,35 @@
   }
 
   async function toggleComplete() {
-    if (!transaction!.isCompleted) {
-      // TODO: bring up popup asking if should send email
-    } else if (transaction!.isPaid) {
+    if (transaction!.isCompleted && transaction!.isPaid) {
       await resetCompletion();
       return;
     }
-    await updateTransaction({ isCompleted: !transaction!.isCompleted });
+    if (transaction!.isCompleted) {
+      await updateTransaction({ isCompleted: false });
+      return;
+    }
+    await updateTransaction({ isCompleted: true, dateCompleted: new Date() });
+  }
+
+  async function completeWithEmail() {
+    const customer = transaction!.customer!;
+    emailState = "sending";
+    try {
+      await rbFetch(`/customers/${transaction!.num}/emails/pickup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ customer: rawFromCustomer(customer) }),
+      });
+    } catch (err) {
+      emailState =
+        err instanceof RbError ? err.message : "Could not send email";
+      return;
+    }
+    emailState = "idle";
+    await updateTransaction({ isCompleted: true, dateCompleted: new Date() });
   }
 
   async function toggleCheckout() {
@@ -676,7 +735,7 @@
           continue;
         }
         receipt.push(
-          `* ${transactionDetail.repair} - ${formatDollars(transactionDetail.repair.price)}`,
+          `* ${transactionDetail.repair.name} - ${formatDollars(transactionDetail.repair.price)}`,
         );
       }
     }
@@ -820,8 +879,23 @@
         >
       </div>
       <ol class="log-list" style="flex: 1; min-height: 0; overflow-y: scroll">
-        {#each history as entry}
-          <li class="log-entry">{entry.description}</li>
+        {#each history as entry (entry.id)}
+          <li class="log-entry">
+            <span class="log-message">{entry.description}</span>
+            <span class="log-meta">
+              {formatDateTime(entry.date)} ({formatDateAgo(entry.date)})
+              &middot; {historyEntryAuthor(entry)}{#if entry.changeType}
+                &middot; {titleCase(entry.changeType)}{/if}
+            </span>
+          </li>
+        {:else}
+          <li class="log-entry faint">
+            {#if historyError !== null}
+              {historyError}
+            {:else}
+              No history recorded for this transaction.
+            {/if}
+          </li>
         {/each}
       </ol>
     </div>
@@ -1072,6 +1146,7 @@
                     <button
                       class="icon-btn danger"
                       aria-label="Delete tune up group"
+                      disabled={transaction.isCompleted}
                       onclick={() => deleteRepairGroup(group.details)}
                       ><Trash /></button
                     >
@@ -1100,6 +1175,7 @@
                             aria-label={detail.completed
                               ? "Mark repair incomplete"
                               : "Mark repair complete"}
+                            disabled={transaction.isCompleted}
                             onclick={() =>
                               toggleRepairCompleted(
                                 repairs.indexOf(detail),
@@ -1141,6 +1217,7 @@
                       aria-label={detail.completed
                         ? "Mark repair incomplete"
                         : "Mark repair complete"}
+                      disabled={transaction.isCompleted}
                       onclick={() =>
                         toggleRepairCompleted(repairs.indexOf(detail), detail)}
                       ><Check /></button
@@ -1148,6 +1225,7 @@
                     <button
                       class="icon-btn danger"
                       aria-label="Delete repair"
+                      disabled={transaction.isCompleted}
                       onclick={() =>
                         deleteTransactionDetail(
                           repairs.indexOf(detail),
@@ -1292,6 +1370,20 @@
           Complete
         {/if}</button
       >
+      {#if !transaction.isCompleted}
+        <button
+          disabled={!canComplete ||
+            !canEmailCustomer ||
+            emailState === "sending"}
+          class="primary"
+          onclick={() => completeWithEmail()}
+          >{#if emailState === "sending"}
+            Sending email...
+          {:else}
+            Complete with email
+          {/if}</button
+        >
+      {/if}
       <button
         disabled={!transaction.isCompleted}
         class="primary"
