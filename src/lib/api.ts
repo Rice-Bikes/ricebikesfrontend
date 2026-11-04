@@ -174,11 +174,31 @@ export async function rbFetch<T>(
   options?: RequestInit,
 ): Promise<T> {
   const response = await fetch(apiBase + url, options);
-  const json = await response.json();
-  if (json.statusCode < 200 || json.statusCode >= 300) {
-    throw new RbError(json.statusCode, json.message, json.responseObject);
+  const json = await response.json().catch(() => null);
+  const status: number = json?.statusCode ?? response.status;
+  if (status < 200 || status >= 300) {
+    throw new RbError(
+      status,
+      json?.message ?? response.statusText,
+      json?.responseObject ?? null,
+    );
   }
-  return json.responseObject;
+  return json?.responseObject;
+}
+
+// TODO: won't need this when backend is corrected to no longer 404
+export async function rbFetchList<T>(
+  url: string,
+  options?: RequestInit,
+): Promise<T[]> {
+  try {
+    return (await rbFetch<T[] | null>(url, options)) ?? [];
+  } catch (err) {
+    if (err instanceof RbError && err.status === 404) {
+      return [];
+    }
+    throw err;
+  }
 }
 
 export function transactionFromRaw(raw: any): Transaction {

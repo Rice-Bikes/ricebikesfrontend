@@ -1,5 +1,10 @@
 <script lang="ts">
-  import { rbFetch, orderRequestFromRaw, type OrderRequest } from "$lib/api";
+  import {
+    rbFetch,
+    rbFetchList,
+    orderRequestFromRaw,
+    type OrderRequest,
+  } from "$lib/api";
   import X from "$lib/icons/X.svelte";
   import Check from "$lib/icons/Check.svelte";
 
@@ -8,7 +13,7 @@
     loadOrders();
   });
   async function loadOrders() {
-    const rawOrders: any[] = await rbFetch("/orderRequests");
+    const rawOrders: any[] = await rbFetchList("/orderRequests");
     orders = rawOrders.map(orderRequestFromRaw);
   }
 

@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     rbFetch,
+    rbFetchList,
     tuneUpItemFromRaw,
     rawFromTuneUpItem,
     type TuneUp,
@@ -24,7 +25,7 @@
   });
   async function loadItems() {
     const urlParams = new URLSearchParams({ tune_up_id: tuneup.id });
-    const raw: any[] = await rbFetch(`/tuneUpItems?${urlParams}`);
+    const raw: any[] = await rbFetchList(`/tuneUpItems?${urlParams}`);
     items = raw.map(tuneUpItemFromRaw);
   }
 

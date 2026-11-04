@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     rbFetch,
+    rbFetchList,
     rawFromTransaction,
     rawFromBike,
     rawFromCustomer,
@@ -93,7 +94,7 @@
     loadItems();
   });
   async function loadItems() {
-    const rawItems: any[] = await rbFetch("/items");
+    const rawItems: any[] = await rbFetchList("/items");
     allItems = rawItems.map(itemFromRaw);
   }
 
@@ -103,7 +104,7 @@
     loadRepairs();
   });
   async function loadRepairs() {
-    const rawRepairs: any[] = await rbFetch("/repairs");
+    const rawRepairs: any[] = await rbFetchList("/repairs");
     allRepairs = rawRepairs.map(repairFromRaw);
   }
 
@@ -113,7 +114,7 @@
     loadCustomers();
   });
   async function loadCustomers() {
-    const rawCustomers: any[] = await rbFetch("/customers");
+    const rawCustomers: any[] = await rbFetchList("/customers");
     allCustomers = rawCustomers.map(customerFromRaw);
   }
 
@@ -263,7 +264,9 @@
     loadTransactionDetails();
   });
   async function loadTransactionDetails() {
-    const rawDetails: any[] = await rbFetch(`/transactionDetails/${params.id}`);
+    const rawDetails: any[] = await rbFetchList(
+      `/transactionDetails/${params.id}`,
+    );
     const details = rawDetails.map(transactionDetailFromRaw);
     for (const detail of details) {
       if (detail.kind === "item") {
@@ -282,7 +285,7 @@
     loadTuneUps();
   });
   async function loadTuneUps() {
-    const rawTuneUps: any[] = await rbFetch("/tuneUps");
+    const rawTuneUps: any[] = await rbFetchList("/tuneUps");
     tuneUps = rawTuneUps.map(tuneUpFromRaw);
   }
   let tuneUpPickerKey = $state(0);
@@ -425,7 +428,7 @@
     loadOrders();
   });
   async function loadOrders() {
-    const rawOrders: any[] = await rbFetch(`/orderRequests/${params.id}`);
+    const rawOrders: any[] = await rbFetchList(`/orderRequests/${params.id}`);
     orders = rawOrders.map(orderRequestFromRaw);
     orders.sort((a, b) => a.dateCreated.getTime() - b.dateCreated.getTime());
   }

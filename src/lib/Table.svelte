@@ -26,7 +26,8 @@
     comparator = null,
   }: Props = $props();
 
-  let maxPage = $derived(Math.ceil(data.length / pageLimit) - 1);
+  // Stays at 0 for an empty table, so the page never clamps to -1
+  let maxPage = $derived(Math.max(Math.ceil(data.length / pageLimit) - 1, 0));
   // Clamp page
   $effect(() => {
     page = Math.min(Math.max(page, 0), maxPage);

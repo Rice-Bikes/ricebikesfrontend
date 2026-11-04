@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { rbFetch, stepFromRaw, rawFromStep, type Step } from "$lib/api";
+  import {
+    rbFetch,
+    rbFetchList,
+    stepFromRaw,
+    rawFromStep,
+    type Step,
+  } from "$lib/api";
   import Check from "$lib/icons/Check.svelte";
   import Trash from "$lib/icons/Trash.svelte";
   import ArrowRight from "$lib/icons/ArrowRight.svelte";
@@ -39,7 +45,7 @@
       urlParamsObj["bundle_id"] = bundle;
     }
     const urlParams = new URLSearchParams(urlParamsObj);
-    const rawSteps: any[] = await rbFetch(`/steps?${urlParams}`);
+    const rawSteps: any[] = await rbFetchList(`/steps?${urlParams}`);
     steps = rawSteps.map(stepFromRaw);
   }
 

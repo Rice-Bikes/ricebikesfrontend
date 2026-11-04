@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     rbFetch,
+    rbFetchList,
     stepBundleFromRaw,
     tuneUpFromRaw,
     repairFromRaw,
@@ -31,7 +32,7 @@
     loadStepBundles();
   });
   async function loadStepBundles() {
-    const rawStepBundles: any[] = await rbFetch("/stepBundles");
+    const rawStepBundles: any[] = await rbFetchList("/stepBundles");
     stepBundles = rawStepBundles.map(stepBundleFromRaw);
   }
 
@@ -40,7 +41,7 @@
     loadTuneUps();
   });
   async function loadTuneUps() {
-    const rawTuneUps: any[] = await rbFetch("/tuneUps");
+    const rawTuneUps: any[] = await rbFetchList("/tuneUps");
     tuneUps = rawTuneUps.map(tuneUpFromRaw);
   }
 
@@ -110,7 +111,7 @@
     loadRepairs();
   });
   async function loadRepairs() {
-    const rawRepairs: any[] = await rbFetch("/repairs");
+    const rawRepairs: any[] = await rbFetchList("/repairs");
     repairs = rawRepairs.map(repairFromRaw);
   }
 
@@ -119,7 +120,7 @@
     loadEmployees();
   });
   async function loadEmployees() {
-    const rawEmployees: any[] = await rbFetch("/users");
+    const rawEmployees: any[] = await rbFetchList("/users");
     employees = rawEmployees.map(userFromRaw);
   }
 

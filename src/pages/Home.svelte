@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     rbFetch,
+    rbFetchList,
     transactionFromRaw,
     customerFromRaw,
     stepBundleFromRaw,
@@ -70,7 +71,7 @@
       is_completed: view === "waiting" ? "true" : "false",
       is_paid: "false",
     });
-    const transactions: any[] = await rbFetch(`/transactions?${params}`);
+    const transactions: any[] = await rbFetchList(`/transactions?${params}`);
     return transactions.map(transactionFromRaw);
   });
   // Beer bike transactions are usually logged against employees, so they stay
@@ -158,7 +159,7 @@
     loadCustomers();
   });
   async function loadCustomers() {
-    const rawCustomers: any[] = await rbFetch("/customers");
+    const rawCustomers: any[] = await rbFetchList("/customers");
     allCustomers = rawCustomers.map(customerFromRaw);
   }
 
@@ -167,7 +168,7 @@
     loadBundles();
   });
   async function loadBundles() {
-    const rawBundles: any[] = await rbFetch("/stepBundles");
+    const rawBundles: any[] = await rbFetchList("/stepBundles");
     bundles = rawBundles.map(stepBundleFromRaw);
   }
   let tuneUps = $state<TuneUp[]>([]);
@@ -175,7 +176,7 @@
     loadTuneUps();
   });
   async function loadTuneUps() {
-    const rawTuneUps: any[] = await rbFetch("/tuneUps");
+    const rawTuneUps: any[] = await rbFetchList("/tuneUps");
     tuneUps = rawTuneUps.map(tuneUpFromRaw);
   }
 
