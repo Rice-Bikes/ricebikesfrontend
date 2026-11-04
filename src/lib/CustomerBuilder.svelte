@@ -16,7 +16,7 @@
     firstName,
     lastName,
     email,
-    phone: phone.trim() === "" ? null : phone,
+    phone: phone.trim() === "" ? null : phone.replaceAll("-", ""),
   });
 </script>
 
