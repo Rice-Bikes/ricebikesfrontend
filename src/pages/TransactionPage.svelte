@@ -1018,124 +1018,6 @@
     <h2>Parts &amp; Repairs</h2>
     <div class="parts-repairs-grid">
       <div class="column">
-        <div class="column-header"><h3>Parts</h3></div>
-        {#if items.length > 0}
-          <ul class="entry-list">
-            {#each items as detail, i (detail.id)}
-              <li style="width: 100%" class="entry-row">
-                <span style="text-wrap: wrap" class="entry-label"
-                  >{detail.item.name} &mdash; ${detail.item.standardPrice}</span
-                >
-                <span class="entry-actions">
-                  <button
-                    class="icon-btn"
-                    aria-label="Request part"
-                    onclick={() => requestPart(i, detail)}><Clock /></button
-                  >
-                  <button
-                    class="icon-btn danger"
-                    aria-label="Delete part"
-                    onclick={() => deleteTransactionDetail(i, detail)}
-                    ><Trash /></button
-                  >
-                </span>
-              </li>
-            {/each}
-          </ul>
-        {:else}
-          <p class="muted">No parts added</p>
-        {/if}
-        {#if orders.length > 0}
-          <div style="margin-top: var(--space-3)" class="column-header">
-            <h3>Orders</h3>
-          </div>
-          <ul class="entry-list">
-            {#each orders as order, i (order.id)}
-              <li
-                style={"width: 100%;" +
-                  (!order.ordered
-                    ? "background: var(--color-warning-soft); border: 1px solid var(--color-warning)"
-                    : "")}
-                class="entry-row"
-              >
-                <span style="text-wrap: wrap" class="entry-label"
-                  >{order.item.name} &mdash; ${order.item.standardPrice}</span
-                >
-                <span class="entry-actions">
-                  {#if order.ordered}
-                    <button
-                      class="icon-btn success"
-                      aria-label="Finish order request"
-                      onclick={() => finishOrder(i, order)}><Check /></button
-                    >
-                  {/if}
-                  <button
-                    class="icon-btn danger"
-                    aria-label="Delete order"
-                    onclick={() => deleteOrder(i, order)}><Trash /></button
-                  >
-                </span>
-              </li>
-            {/each}
-          </ul>
-        {/if}
-        <button
-          class="primary"
-          style="margin-top: var(--space-3)"
-          onclick={() => itemPickerKey++}
-          command="show-modal"
-          commandfor="item-dialog"><Plus /> Add part</button
-        >
-        <dialog id="item-dialog" style="height: 25rem">
-          <div style="display: flex; flex-direction: column; height: 100%;">
-            <div class="dialog-header">
-              <h2>Add part</h2>
-              <button
-                class="icon-btn dialog-close"
-                command="close"
-                commandfor="item-dialog"
-                aria-label="Close"><X /></button
-              >
-            </div>
-            {#snippet itemRender(item: Item)}
-              {item.name} &mdash; ${item.standardPrice}
-            {/snippet}
-            {#key itemPickerKey}
-              <Picker
-                data={allItems}
-                key={(item) => item.id}
-                searchKeys={["name", "upc"]}
-                render={itemRender}
-                callback={onItemPicked}
-                placeholder="Search parts"
-              />
-            {/key}
-            <div style="flex: 1; min-height: 0"></div>
-            <div class="dialog-actions">
-              <button
-                onclick={() => itemBuilderKey++}
-                command="show-modal"
-                commandfor="new-item-dialog"><Plus /> New part</button
-              >
-            </div>
-          </div>
-        </dialog>
-        <dialog id="new-item-dialog">
-          <div class="dialog-header">
-            <h2>New part</h2>
-            <button
-              class="icon-btn dialog-close"
-              command="close"
-              commandfor="new-item-dialog"
-              aria-label="Close"><X /></button
-            >
-          </div>
-          {#key itemBuilderKey}
-            <ItemBuilder callback={onItemBuilt} />
-          {/key}
-        </dialog>
-      </div>
-      <div class="column">
         <div class="column-header"><h3>Repairs</h3></div>
         {#if repairGroups.length > 0}
           <ul class="entry-list">
@@ -1337,6 +1219,124 @@
             {/key}
             <div style="flex: 1; min-height: 0"></div>
           </div>
+        </dialog>
+      </div>
+      <div class="column">
+        <div class="column-header"><h3>Parts</h3></div>
+        {#if items.length > 0}
+          <ul class="entry-list">
+            {#each items as detail, i (detail.id)}
+              <li style="width: 100%" class="entry-row">
+                <span style="text-wrap: wrap" class="entry-label"
+                  >{detail.item.name} &mdash; ${detail.item.standardPrice}</span
+                >
+                <span class="entry-actions">
+                  <button
+                    class="icon-btn"
+                    aria-label="Request part"
+                    onclick={() => requestPart(i, detail)}><Clock /></button
+                  >
+                  <button
+                    class="icon-btn danger"
+                    aria-label="Delete part"
+                    onclick={() => deleteTransactionDetail(i, detail)}
+                    ><Trash /></button
+                  >
+                </span>
+              </li>
+            {/each}
+          </ul>
+        {:else}
+          <p class="muted">No parts added</p>
+        {/if}
+        {#if orders.length > 0}
+          <div style="margin-top: var(--space-3)" class="column-header">
+            <h3>Orders</h3>
+          </div>
+          <ul class="entry-list">
+            {#each orders as order, i (order.id)}
+              <li
+                style={"width: 100%;" +
+                  (!order.ordered
+                    ? "background: var(--color-warning-soft); border: 1px solid var(--color-warning)"
+                    : "")}
+                class="entry-row"
+              >
+                <span style="text-wrap: wrap" class="entry-label"
+                  >{order.item.name} &mdash; ${order.item.standardPrice}</span
+                >
+                <span class="entry-actions">
+                  {#if order.ordered}
+                    <button
+                      class="icon-btn success"
+                      aria-label="Finish order request"
+                      onclick={() => finishOrder(i, order)}><Check /></button
+                    >
+                  {/if}
+                  <button
+                    class="icon-btn danger"
+                    aria-label="Delete order"
+                    onclick={() => deleteOrder(i, order)}><Trash /></button
+                  >
+                </span>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+        <button
+          class="primary"
+          style="margin-top: var(--space-3)"
+          onclick={() => itemPickerKey++}
+          command="show-modal"
+          commandfor="item-dialog"><Plus /> Add part</button
+        >
+        <dialog id="item-dialog" style="height: 25rem">
+          <div style="display: flex; flex-direction: column; height: 100%;">
+            <div class="dialog-header">
+              <h2>Add part</h2>
+              <button
+                class="icon-btn dialog-close"
+                command="close"
+                commandfor="item-dialog"
+                aria-label="Close"><X /></button
+              >
+            </div>
+            {#snippet itemRender(item: Item)}
+              {item.name} &mdash; ${item.standardPrice}
+            {/snippet}
+            {#key itemPickerKey}
+              <Picker
+                data={allItems}
+                key={(item) => item.id}
+                searchKeys={["name", "upc"]}
+                render={itemRender}
+                callback={onItemPicked}
+                placeholder="Search parts"
+              />
+            {/key}
+            <div style="flex: 1; min-height: 0"></div>
+            <div class="dialog-actions">
+              <button
+                onclick={() => itemBuilderKey++}
+                command="show-modal"
+                commandfor="new-item-dialog"><Plus /> New part</button
+              >
+            </div>
+          </div>
+        </dialog>
+        <dialog id="new-item-dialog">
+          <div class="dialog-header">
+            <h2>New part</h2>
+            <button
+              class="icon-btn dialog-close"
+              command="close"
+              commandfor="new-item-dialog"
+              aria-label="Close"><X /></button
+            >
+          </div>
+          {#key itemBuilderKey}
+            <ItemBuilder callback={onItemBuilt} />
+          {/key}
         </dialog>
       </div>
     </div>
