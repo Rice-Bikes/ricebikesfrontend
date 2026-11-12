@@ -208,6 +208,7 @@
   const totalPrice = $derived.by(() => {
     return (
       items.reduce((acc, detail) => acc + detail.item.standardPrice, 0) +
+      orders.reduce((acc, order) => acc + order.item.standardPrice, 0) +
       repairs.reduce(
         (acc, detail) =>
           acc + (detail.tuneUpId === null ? detail.repair.price : 0),
