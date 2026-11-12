@@ -555,6 +555,30 @@
     await onItemPicked(itemWithId);
   }
 
+  function isUPC(s: string): boolean {
+    return s.length === 12 && /^[0-9]+$/.test(s);
+  }
+
+  let checkingQBP = $state(false);
+  async function checkQBP(input: string) {
+    if (!isUPC(input) || checkingQBP) {
+      return;
+    }
+    checkingQBP = true;
+    try {
+      const rawItem: any = await rbFetch(`/items/update/${input}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const item = itemFromRaw(rawItem);
+      allItems.push(item);
+      await onItemPicked(item);
+    } catch (err) {}
+    checkingQBP = false;
+  }
+
   async function onRepairBuilt(repair: NewRepair) {
     const newRepairDialog = document.getElementById(
       "new-repair-dialog",
@@ -1314,6 +1338,11 @@
                 searchKeys={["name", "upc"]}
                 render={itemRender}
                 callback={onItemPicked}
+                finalFilter={(input: string, item: Item) =>
+                  !isUPC(input) || item.upc === input}
+                fallbackText={checkingQBP ? "Checking..." : "Check QBP"}
+                fallback={checkQBP}
+                fallbackEnabled={!checkingQBP}
                 placeholder="Search parts"
               />
             {/key}

@@ -330,7 +330,7 @@ export function rawFromRepair(repair: Partial<Repair>): any {
 export function itemFromRaw(raw: any): Item {
   return {
     id: raw.item_id,
-    upc: raw.upc,
+    upc: raw.upc.trim(),
     name: raw.name,
     description: raw.description,
     brand: raw.brand,

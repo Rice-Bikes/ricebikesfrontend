@@ -13,6 +13,10 @@
     placeholder?: string;
     popover?: boolean;
     id?: number;
+    finalFilter?: (input: string, row: T) => boolean;
+    fallback?: (input: string) => void;
+    fallbackEnabled?: boolean;
+    fallbackText?: string;
   }
 
   const {
@@ -24,11 +28,18 @@
     searchLimit = 10,
     placeholder = "",
     popover = false,
+    finalFilter = undefined,
+    fallback = undefined,
+    fallbackEnabled = true,
+    fallbackText = "Fallback",
   }: Props = $props();
 
   let searchInput = $state("");
   const fuse = $derived(
-    new Fuse(data, { keys: searchKeys as FuseOptionKey<T>[], threshold: 0.4 }),
+    new Fuse(data, {
+      keys: searchKeys as FuseOptionKey<T>[],
+      threshold: 0.4,
+    }),
   );
 
   const id = crypto.randomUUID
@@ -57,6 +68,10 @@
     }
     return fuse
       .search(debouncedSearchInput)
+      .filter(
+        (result) =>
+          !finalFilter || finalFilter(debouncedSearchInput, result.item),
+      )
       .map((result) => result.item)
       .slice(0, searchLimit);
   });
@@ -119,7 +134,7 @@
     }
   }}
 />
-{#if popover || filtered.length > 0}
+{#if popover || filtered.length > 0 || debouncedSearchInput.length > 0}
   <div
     bind:this={listEl}
     id="filtered-list-{id}"
@@ -128,21 +143,28 @@
       ? "position: fixed; overflow-y: scroll; height: 16rem; max-height: 16rem"
       : "overflow-y: scroll;"}
   >
-    <ol class="picker-list">
-      {#each filtered as row (key(row))}
-        <li>
-          <button
-            onclick={(e) => {
-              e.preventDefault();
-              onSelected(row);
-              searchInput = "";
-              debouncedSearchInput = "";
-            }}
-          >
-            {@render render(row)}
-          </button>
-        </li>
-      {/each}
-    </ol>
+    {#if filtered.length > 0}
+      <ol class="picker-list">
+        {#each filtered as row (key(row))}
+          <li>
+            <button
+              onclick={(e) => {
+                e.preventDefault();
+                onSelected(row);
+                searchInput = "";
+                debouncedSearchInput = "";
+              }}
+            >
+              {@render render(row)}
+            </button>
+          </li>
+        {/each}
+      </ol>
+    {:else if fallback}
+      <button
+        disabled={!fallbackEnabled}
+        onclick={() => fallback(debouncedSearchInput)}>{fallbackText}</button
+      >
+    {/if}
   </div>
 {/if}
