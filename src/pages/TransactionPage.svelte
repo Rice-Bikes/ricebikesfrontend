@@ -1026,7 +1026,9 @@
                 <li style="width: 100%" class="repair-group">
                   <div class="repair-group-header">
                     <span class="entry-label"
-                      >Tune up: {tuneUpName(group.tuneUpId)}</span
+                      >Tune up: {tuneUpName(group.tuneUpId)} &mdash; ${tuneUpPrice(
+                        group.tuneUpId,
+                      )}</span
                     >
                     <button
                       class="icon-btn danger"
