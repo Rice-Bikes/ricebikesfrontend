@@ -81,19 +81,10 @@
       transactionType,
       customer: transactionType === "retrospec" ? null : customer,
       bike,
-      stepBundle: bundles.find((b) => b.id === stepBundleId) ?? null,
-      tuneUp: tuneups.find((t) => t.id == tuneUpId) ?? null,
+      stepBundle: bundles.find((b) => b.name === "Default Retrospec") ?? null,
+      tuneUp: tuneups.find((t) => t.name === "Default Retrospec") ?? null,
       quantity: transactionType === "retrospec" ? quantity : 1,
     };
-  });
-
-  $effect(() => {
-    if (transactionType === "retrospec") {
-      stepBundleId =
-        bundles.find((bundle) => bundle.name === "Default Retrospec")?.id ?? "";
-      tuneUpId =
-        tuneups.find((tuneUp) => tuneUp.name === "Default Retrospec")?.id ?? "";
-    }
   });
 
   $effect(() => {
@@ -148,28 +139,6 @@
     <div>
       <label for="retrospec-quantity">Quantity:</label>
       <input bind:value={quantity} min="1" step="1" type="number" />
-    </div>
-  {/if}
-  {#if transactionType === "retrospec" && bundles.length > 0}
-    <div>
-      <label for="step-bundle-select">Step bundle:</label>
-      <select id="step-bundle-select" bind:value={stepBundleId}>
-        <option value=""></option>
-        {#each bundles as bundle}
-          <option value={bundle.id}>{bundle.name}</option>
-        {/each}
-      </select>
-    </div>
-  {/if}
-  {#if tuneups.length > 0}
-    <div>
-      <label for="tune-up-select">Tune up:</label>
-      <select id="tune-up-select" bind:value={tuneUpId}>
-        <option value=""></option>
-        {#each tuneups as tuneUp}
-          <option value={tuneUp.id}>{tuneUp.name}</option>
-        {/each}
-      </select>
     </div>
   {/if}
   {#if error !== null}
