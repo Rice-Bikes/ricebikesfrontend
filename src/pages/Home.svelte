@@ -26,7 +26,7 @@
   import EmailIcon from "$lib/icons/Email.svelte";
   import { push, replace, router } from "svelte-spa-router";
 
-  type View = "main" | "builds" | "refurbs" | "beerBikes" | "waiting";
+  type View = "main" | "builds" | "refurbs" | "beerBikes" | "waiting" | "paid";
 
   let view = $state<View>("main");
   // Employee transactions are hidden unless asked for, except on the refurbs
@@ -61,6 +61,11 @@
           x.isCompleted === true &&
           x.dateCompleted !== null &&
           x.isPaid === false;
+      case "paid":
+        return (x) =>
+          x.isCompleted === true &&
+          x.dateCompleted !== null &&
+          x.isPaid === true;
     }
   });
 
@@ -68,8 +73,8 @@
     const params = new URLSearchParams({
       page_limit: "1000",
       aggregate: "true",
-      is_completed: view === "waiting" ? "true" : "false",
-      is_paid: "false",
+      is_completed: view === "waiting" || view === "paid" ? "true" : "false",
+      is_paid: view === "paid" ? "true" : "false",
     });
     const transactions: any[] = await rbFetchList(`/transactions?${params}`);
     return transactions.map(transactionFromRaw);
@@ -126,7 +131,7 @@
         width: "auto",
       },
     ];
-    if (view === "waiting") {
+    if (view === "waiting" || view === "paid") {
       cols.push({
         name: "Completed",
         render: transactionCompleted,
@@ -278,6 +283,7 @@
       <option value="refurbs">Refurbs</option>
       <option value="beerBikes">Beer bikes</option>
       <option value="waiting">Waiting on Pickup</option>
+      <option value="paid">Paid</option>
     </select>
     <label class="field-row" for="show-employees">
       <input id="show-employees" type="checkbox" bind:checked={showEmployees} />
