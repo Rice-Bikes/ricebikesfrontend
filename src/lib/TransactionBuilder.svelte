@@ -81,8 +81,14 @@
       transactionType,
       customer: transactionType === "retrospec" ? null : customer,
       bike,
-      stepBundle: bundles.find((b) => b.name === "Default Retrospec") ?? null,
-      tuneUp: tuneups.find((t) => t.name === "Default Retrospec") ?? null,
+      stepBundle:
+        transactionType !== "retrospec"
+          ? null
+          : (bundles.find((b) => b.name === "Default Retrospec") ?? null),
+      tuneUp:
+        transactionType !== "retrospec"
+          ? null
+          : (tuneups.find((t) => t.name === "Default Retrospec") ?? null),
       quantity: transactionType === "retrospec" ? quantity : 1,
     };
   });
