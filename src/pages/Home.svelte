@@ -2,6 +2,7 @@
   import {
     rbFetch,
     rbFetchList,
+    rbFetchPaged,
     transactionFromRaw,
     customerFromRaw,
     stepBundleFromRaw,
@@ -37,50 +38,31 @@
     view = newView;
     showEmployees = newView === "refurbs";
   }
-  const viewFilter: (transaction: Transaction) => boolean = $derived.by(() => {
-    switch (view) {
-      case "main":
-        return (transaction) =>
-          transaction?.isCompleted === false &&
-          transaction.transactionType !== null &&
-          transaction.transactionType !== "retrospec" &&
-          transaction?.isRefurb === false;
-      case "refurbs":
-        return (x) => x.isCompleted === false && x.isRefurb;
-      case "beerBikes":
-        return (x) =>
-          x.isCompleted === false &&
-          x.transactionType !== null &&
-          x.transactionType !== "retrospec" &&
-          x.isBeerBike;
-      case "builds":
-        return (x) =>
-          x.isCompleted === false && x.transactionType === "retrospec";
-      case "waiting":
-        return (x) =>
-          x.isCompleted === true &&
-          x.dateCompleted !== null &&
-          x.isPaid === false;
-      case "paid":
-        return (x) =>
-          x.isCompleted === true &&
-          x.dateCompleted !== null &&
-          x.isPaid === true;
-    }
-  });
 
-  const transactionsPromise = $derived.by(async () => {
-    const params = new URLSearchParams({
-      page_limit: "1000",
-      aggregate: "true",
-      is_completed: view === "waiting" || view === "paid" ? "true" : "false",
-      is_paid: view === "paid" ? "true" : "false",
-    });
-    const transactions: any[] = await rbFetchList(`/transactions?${params}`);
-    return transactions.map(transactionFromRaw);
+  let loadedTransactions = $state(false);
+  let transactions = $state<Transaction[]>([]);
+  let transactionCursor = $state<string | null>(null);
+  let transactionTotal = $state(0);
+  $effect(() => {
+    loadTransactions();
   });
-  // Beer bike transactions are usually logged against employees, so they stay
-  // visible even when employee transactions are hidden.
+  async function loadTransactions() {
+    loadedTransactions = false;
+    const params = new URLSearchParams({
+      page_limit: "100",
+      aggregate: "true",
+      view,
+      show_employees: showEmployees ? "true" : "false",
+    });
+    const { data, nextCursor, total } = await rbFetchPaged(
+      `/transactions?${params}`,
+    );
+    let dataArray = data as any[];
+    transactions = dataArray.map(transactionFromRaw);
+    transactionCursor = nextCursor;
+    transactionTotal = total;
+    loadedTransactions = true;
+  }
   const employeeFilter: (transaction: Transaction) => boolean = $derived.by(
     () => {
       if (showEmployees) {
@@ -90,13 +72,6 @@
         !transaction.isEmployee || transaction.isBeerBike;
     },
   );
-
-  const filteredTransactions: Promise<Transaction[]> = $derived.by(async () => {
-    const fn = viewFilter;
-    const employeeFn = employeeFilter;
-    const transactions = await transactionsPromise;
-    return transactions.filter((x) => fn(x) && employeeFn(x));
-  });
 
   let transactionTablePage = $derived.by(() => {
     const params = new URLSearchParams(router.querystring ?? "");
@@ -146,6 +121,25 @@
     }
     return cols;
   });
+  async function loadNewTransactions() {
+    if (!transactionCursor) {
+      return;
+    }
+    const params = new URLSearchParams({
+      page_limit: "100",
+      aggregate: "true",
+      view,
+      show_employees: showEmployees ? "true" : "false",
+      cursor: transactionCursor,
+    });
+    const { data, nextCursor, total } = await rbFetchPaged(
+      `/transactions?${params}`,
+    );
+    let dataArray = data as any[];
+    transactions.push(...dataArray.map(transactionFromRaw));
+    transactionCursor = nextCursor;
+    transactionTotal = total;
+  }
 
   // Change URL based on Transaction table page
   $effect(() => {
@@ -270,9 +264,9 @@
 
 <h1>Transactions</h1>
 
-{#await filteredTransactions}
+{#if !loadedTransactions}
   <p class="muted">Loading...</p>
-{:then transactions: Transaction[]}
+{:else}
   <div class="field-row" style="margin-bottom: var(--space-4)">
     <select
       value={view}
@@ -296,7 +290,7 @@
       commandfor="transaction-dialog"><Plus /> New</button
     >
     <span class="spacer" style="flex: 1"></span>
-    <span class="muted">{transactions.length} transactions</span>
+    <span class="muted">{transactionTotal} transactions</span>
   </div>
   <dialog id="transaction-dialog" style="height: 25rem;">
     <div style="display: flex; flex-direction: column; height: 100%">
@@ -324,23 +318,10 @@
   <Table
     bind:page={transactionTablePage}
     data={transactions}
+    total={transactionTotal}
     pageLimit={20}
     key={(transaction) => transaction.id}
-    comparator={(a, b) => {
-      if (a.isUrgent && !b.isUrgent) {
-        return -1;
-      }
-      if (b.isUrgent && !a.isUrgent) {
-        return 1;
-      }
-      if (a.isWaitingOnEmail && !b.isWaitingOnEmail) {
-        return 1;
-      }
-      if (b.isWaitingOnEmail && !a.isWaitingOnEmail) {
-        return -1;
-      }
-      return a.dateCreated.getTime() - b.dateCreated.getTime();
-    }}
+    loadPages={loadNewTransactions}
     columns={transactionTableColumns}
   />
-{/await}
+{/if}

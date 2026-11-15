@@ -169,10 +169,10 @@ export class RbError extends Error {
   }
 }
 
-export async function rbFetch<T>(
+export async function rbFetchInner<T>(
   url: string,
   options?: RequestInit,
-): Promise<T> {
+): Promise<any> {
   const response = await fetch(apiBase + url, options);
   const json = await response.json().catch(() => null);
   const status: number = json?.statusCode ?? response.status;
@@ -183,7 +183,26 @@ export async function rbFetch<T>(
       json?.responseObject ?? null,
     );
   }
-  return json?.responseObject;
+  return json;
+}
+
+export async function rbFetch<T>(
+  url: string,
+  options?: RequestInit,
+): Promise<T> {
+  return (await rbFetchInner<T>(url, options))?.responseObject;
+}
+
+export async function rbFetchPaged<T>(
+  url: string,
+  options?: RequestInit,
+): Promise<{ data: T; nextCursor: string | null; total: number }> {
+  const json = await rbFetchInner<T>(url, options);
+  return {
+    data: json?.responseObject,
+    nextCursor: json?.next_cursor,
+    total: json?.total,
+  };
 }
 
 // TODO: won't need this when backend is corrected to no longer 404

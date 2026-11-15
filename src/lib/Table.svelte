@@ -15,6 +15,8 @@
     key: (row: T) => any;
     pageLimit: number;
     comparator?: ((a: T, b: T) => number) | null;
+    loadPages?: (() => Promise<void>) | null;
+    total?: number;
   }
 
   let {
@@ -24,10 +26,15 @@
     key,
     pageLimit,
     comparator = null,
+    total = data.length,
+    loadPages = null,
   }: Props = $props();
 
   // Stays at 0 for an empty table, so the page never clamps to -1
-  let maxPage = $derived(Math.max(Math.ceil(data.length / pageLimit) - 1, 0));
+  let maxPage = $derived(Math.max(Math.ceil(total / pageLimit) - 1, 0));
+  let loadedMaxPage = $derived(
+    Math.max(Math.ceil(data.length / pageLimit) - 1, 0),
+  );
   // Clamp page
   $effect(() => {
     page = Math.min(Math.max(page, 0), maxPage);
@@ -38,6 +45,11 @@
       sorted.sort(comparator);
     }
     return sorted.slice(page * pageLimit, page * pageLimit + pageLimit);
+  });
+  $effect(() => {
+    if (loadPages && page === loadedMaxPage - 1 && loadedMaxPage < maxPage) {
+      loadPages();
+    }
   });
 </script>
 
@@ -55,13 +67,15 @@
     </tr>
   </thead>
   <tbody>
-    {#each rawRows as rawData (key(rawData))}
-      <tr>
-        {#each columns as column}
-          <td>{@render column.render(rawData)}</td>
-        {/each}
-      </tr>
-    {/each}
+    {#if page <= loadedMaxPage}
+      {#each rawRows as rawData (key(rawData))}
+        <tr>
+          {#each columns as column}
+            <td>{@render column.render(rawData)}</td>
+          {/each}
+        </tr>
+      {/each}
+    {/if}
   </tbody>
 </table>
 <div class="table-pagination">
