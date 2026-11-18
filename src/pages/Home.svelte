@@ -15,6 +15,7 @@
     type StepBundle,
     type TuneUp,
   } from "$lib/api";
+  import { appState } from "$lib/state.svelte";
   import { formatDateAgo, titleCase } from "$lib/format";
   import Table from "$lib/Table.svelte";
   import TransactionBuilder from "$lib/TransactionBuilder.svelte";
@@ -208,6 +209,7 @@
         step_bundle_id: transaction.stepBundle?.id ?? undefined,
         tune_up_id: transaction.tuneUp?.id ?? undefined,
         quantity: transaction.quantity,
+        changed_by: appState.user!.id,
       }),
     });
     if (transaction.quantity == 1) {

@@ -170,11 +170,17 @@
         repairs.splice(i, 1);
       }
     }
+    const params = new URLSearchParams({
+      changed_by: appState.user!.id,
+    });
     await Promise.all(
       details.map((detail) =>
-        rbFetch(`/transactionDetails/${detail.id}`, { method: "DELETE" }),
+        rbFetch(`/transactionDetails/${detail.id}?${params}`, {
+          method: "DELETE",
+        }),
       ),
     );
+    await loadHistory();
   }
 
   type TransactionTag = "beerBike" | "urgent" | "nuclear" | "email" | "refurb";
@@ -405,7 +411,13 @@
     if (detail.kind === "repair") {
       repairs.splice(i, 1);
     }
-    await rbFetch(`/transactionDetails/${detail.id}`, { method: "DELETE" });
+    const params = new URLSearchParams({
+      changed_by: appState.user!.id,
+    });
+    await rbFetch(`/transactionDetails/${detail.id}?${params}`, {
+      method: "DELETE",
+    });
+    await loadHistory();
   }
 
   async function toggleRepairCompleted(
@@ -420,8 +432,10 @@
       },
       body: JSON.stringify({
         completed: repairs[i].completed,
+        changed_by: appState.user!.id,
       }),
     });
+    await loadHistory();
   }
 
   let orders = $state<OrderRequest[]>([]);
@@ -463,10 +477,15 @@
     });
     const idx = orders.findIndex((o) => o.id == `TEMP-${orderIdx}`)!;
     orders[idx] = orderRequestFromRaw(rawOrder);
+    await loadHistory();
   }
   async function deleteOrder(i: number, order: OrderRequest) {
     orders.splice(i, 1);
-    await rbFetch(`/orderRequests/${order.id}`, { method: "DELETE" });
+    const params = new URLSearchParams({
+      changed_by: appState.user!.id,
+    });
+    await rbFetch(`/orderRequests/${order.id}?${params}`, { method: "DELETE" });
+    await loadHistory();
   }
   async function finishOrder(i: number, order: OrderRequest) {
     deleteOrder(i, order);
@@ -497,6 +516,7 @@
     });
     const idx = items.findIndex((i) => i.id == `TEMP-${detailIdx}`)!;
     items[idx] = transactionDetailFromRaw(rawDetail) as TransactionDetailItem;
+    await loadHistory();
   }
 
   async function onRepairPicked(repair: Repair) {
@@ -529,6 +549,7 @@
     repairs[idx] = transactionDetailFromRaw(
       rawDetail,
     ) as TransactionDetailRepair;
+    await loadHistory();
   }
 
   async function onItemBuilt(item: NewItem) {
@@ -626,13 +647,17 @@
     if (!didUpdate) {
       return;
     }
-    return rbFetch(`/transactions/${params.id}`, {
+    await rbFetch(`/transactions/${params.id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(rawFromTransaction(body)),
+      body: JSON.stringify({
+        changed_by: appState.user!.id,
+        ...rawFromTransaction(body),
+      }),
     });
+    await loadHistory();
   }
 
   async function changeTagValue(tag: TransactionTag, on: boolean) {
@@ -723,13 +748,17 @@
     if (!didUpdate) {
       return;
     }
-    return rbFetch(`/bikes/${transaction!.bike!.id}`, {
+    await rbFetch(`/bikes/${transaction!.bike!.id}`, {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(rawFromBike(body)),
+      body: JSON.stringify({
+        changed_by: appState.user!.id,
+        ...rawFromBike(body),
+      }),
     });
+    await loadHistory();
   }
 
   async function updateCustomer(body: Partial<Customer>) {
